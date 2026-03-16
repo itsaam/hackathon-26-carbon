@@ -9,8 +9,8 @@
 - Auth : JWT
 
 ## Équipe
-- Samy — Backend Core (entités, CRUD, config)
-- Adam — Backend Logique (calcul carbone, JWT, Docker)
+- Adam — Backend Core (entités, CRUD, config)
+- Samy — Backend Logique (calcul carbone, JWT, Docker)
 - Lucas — Frontend Angular (formulaires, pages)
 - Mohamed — Frontend Angular (dashboard, graphiques)
 - Stephane — Mobile React Native

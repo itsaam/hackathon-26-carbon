@@ -635,19 +635,19 @@ ORDRE DE PRIORITÉ (Palier 1) :
 
 | Qui | Quoi | Objectif midi |
 |---|---|---|
-| Adam | Setup Spring Boot + entités + CRUD | **Endpoints sites dispo** |
-| Samy | CarbonCalculationService + /calculate | **Calcul fonctionne** |
+| Samy | Setup Spring Boot + entités + CRUD | **Endpoints sites dispo** |
+| Adam | CarbonCalculationService + /calculate | **Calcul fonctionne** |
 | Lucas | Setup Angular + routing + formulaire | Formulaire prêt (mock API) |
 | Mohamed | Setup ngx-charts + composants graphiques | Composants prêts (données statiques) |
 | Stephane | Setup React Native + navigation + écrans | Écrans de base prêts (mock) |
-| Mehdi | README + Docker + aide Samy DB | Base PostgreSQL opé |
+| Mehdi | README + Docker + aide Adam DB | Base PostgreSQL opé |
 
 **Jour 1 — Après-midi (14h-19h) :**
 
 | Qui | Quoi |
 |---|---|
-| Adam | Endpoints dashboard + breakdown |
-| Samy | JWT auth complet |
+| Samy | Endpoints dashboard + breakdown |
+| Adam | JWT auth complet |
 | Lucas | Brancher front sur vraie API + liste + détail |
 | Mohamed | Brancher dashboard sur API + KPIs + graphiques |
 | Stephane | Brancher mobile sur API + login + formulaire |
