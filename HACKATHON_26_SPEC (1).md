@@ -704,20 +704,20 @@ ORDRE DE PRIORITÉ (Palier 1) :
 hackathon-26/
 ├── backend/                          # Samy + Adam
 │   ├── src/main/java/com/hackathon/carbon/
-│   │   ├── config/                   # CorsConfig (Adam), SecurityConfig (Samy)
-│   │   ├── controller/               # SiteController (Adam), AuthController (Samy), DashboardController (Samy)
-│   │   ├── dto/                      # Adam
-│   │   ├── entity/                   # Adam
-│   │   ├── repository/              # Adam
+│   │   ├── config/                   # CorsConfig (Samy), SecurityConfig (Adam)
+│   │   ├── controller/               # SiteController (Samy), AuthController (Adam), DashboardController (Samy)
+│   │   ├── dto/                      # Samy
+│   │   ├── entity/                   # Samy
+│   │   ├── repository/              # Samy
 │   │   ├── security/                # Adam
-│   │   ├── service/                 # CarbonCalculationService (Samy), AuthService (Samy)
+│   │   ├── service/                 # CarbonCalculationService (Adam), AuthService (Adam)
 │   │   └── CarbonApplication.java
 │   ├── src/main/resources/
-│   │   ├── application.yml          # Adam
-│   │   └── data.sql                 # Adam
+│   │   ├── application.yml          # Samy
+│   │   └── data.sql                 # Samy
 │   ├── src/test/                    # Mehdi + Samy
-│   ├── Dockerfile                   # Samy
-│   └── pom.xml                      # Adam
+│   ├── Dockerfile                   # Adam
+│   └── pom.xml                      # Samy
 ├── frontend/                         # Lucas + Mohamed
 │   ├── src/app/
 │   │   ├── core/                    # Lucas (services, guards, interceptors)
@@ -737,7 +737,7 @@ hackathon-26/
 │   │   ├── navigation/
 │   │   └── utils/
 │   └── package.json
-├── docker-compose.yml               # Samy + Mehdi
+├── docker-compose.yml               # Adam + Mehdi
 └── README.md                        # Mehdi
 ```
 
