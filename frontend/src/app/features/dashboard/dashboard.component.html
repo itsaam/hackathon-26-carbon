@@ -1,0 +1,27 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Dashboard carbone</h1>
+  </header>
+
+  <div *ngIf="loading" class="loading">Chargement du dashboard…</div>
+
+  <section *ngIf="!loading && summary as s" class="grid">
+    <div class="kpi-grid">
+      <app-kpi-card
+        label="CO₂ total agrégé"
+        [value]="(s.totalCo2Kg / 1000) | number : '1.0-1'"
+        unit="tCO₂e"
+      />
+      <app-kpi-card
+        label="Nombre de sites"
+        [value]="s.siteCount | number : '1.0-0'"
+      />
+      <app-kpi-card
+        label="CO₂ moyen / m²"
+        [value]="s.averageCo2PerM2 | number : '1.0-1'"
+        unit="kgCO₂e/m²"
+      />
+    </div>
+  </section>
+</section>
+

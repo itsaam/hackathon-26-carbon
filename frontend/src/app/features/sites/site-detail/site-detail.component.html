@@ -1,0 +1,59 @@
+<section class="page" *ngIf="site as s">
+  <header class="page-header">
+    <div>
+      <h1>{{ s.name }}</h1>
+      <p class="subtitle">
+        {{ s.surfaceM2 }} m² · {{ s.employeeCount }} employés
+      </p>
+    </div>
+
+    <button class="btn btn-primary" (click)="recalculate()" [disabled]="calculating">
+      {{ calculating ? 'Recalcul en cours…' : 'Recalculer l’empreinte' }}
+    </button>
+  </header>
+
+  <section class="layout">
+    <article class="card">
+      <h2>Données du site</h2>
+      <ul>
+        <li>Surface : {{ s.surfaceM2 }} m²</li>
+        <li>Employés : {{ s.employeeCount }}</li>
+        <li>Postes de travail : {{ s.workstationCount || '—' }}</li>
+        <li>
+          Parkings : {{ s.parkingUnderground }} sous-dalle,
+          {{ s.parkingBasement }} sous-sol,
+          {{ s.parkingOutdoor }} aériens
+        </li>
+      </ul>
+    </article>
+
+    <article class="card" *ngIf="latestResult as r">
+      <h2>Dernier résultat CO₂</h2>
+      <div class="kpis">
+        <div class="kpi">
+          <div class="kpi-label">CO₂ total</div>
+          <div class="kpi-value">
+            {{ r.totalCo2Kg / 1000 | number : '1.0-1' }} tCO₂e
+          </div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Par m²</div>
+          <div class="kpi-value">
+            {{ r.co2PerM2 | number : '1.0-1' }} kgCO₂e/m²
+          </div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Par employé</div>
+          <div class="kpi-value">
+            {{ r.co2PerEmployee | number : '1.0-1' }} kgCO₂e/employé
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+</section>
+
+<p *ngIf="!site && !loading" class="empty">
+  Site introuvable.
+</p>
+

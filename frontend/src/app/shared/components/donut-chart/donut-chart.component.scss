@@ -1,0 +1,24 @@
+.donut {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 14px solid rgba(34, 197, 94, 0.8);
+  border-top-color: rgba(14, 165, 233, 0.8);
+  border-right-color: rgba(14, 165, 233, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-inner {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #020617;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+

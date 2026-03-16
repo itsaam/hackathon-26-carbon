@@ -1,0 +1,11 @@
+<svg class="line-chart" viewBox="0 0 100 40" *ngIf="points.length > 1">
+  <polyline
+    class="line"
+    [attr.points]="
+      points
+        .map((p, i) => (i * (100 / (points.length - 1))) + ',' + (40 - (p.y || 0)))
+        .join(' ')
+    "
+  ></polyline>
+</svg>
+

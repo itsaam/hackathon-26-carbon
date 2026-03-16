@@ -1,0 +1,35 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.95), rgba(15, 118, 110, 0.6));
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  margin-right: 0.5rem;
+}
+
+a {
+  font-size: 0.9rem;
+  color: #e5e7eb;
+}
+
+a.active {
+  color: #22c55e;
+}
+
