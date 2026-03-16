@@ -436,7 +436,7 @@ frontend/src/app/app.routes.ts
 
 ---
 
-### 🟠 PARTIE 4 — Mohamed — FRONTEND ANGULAR : Dashboard & Graphiques
+### 🟠 PARTIE 4 — Stephane — FRONTEND ANGULAR : Dashboard & Graphiques
 
 **Rôle : Dashboard interactif, KPIs, tous les graphiques, data visualisation.**
 
@@ -491,7 +491,7 @@ frontend/src/app/shared/styles/
 
 ---
 
-### 🟣 PARTIE 5 — Stephane — MOBILE (React Native)
+### 🟣 PARTIE 5 — Mohamed — MOBILE (React Native)
 
 **Rôle : Application mobile complète, saisie terrain, consultation.**
 
@@ -616,12 +616,12 @@ ORDRE DE PRIORITÉ (Palier 1) :
        ├── Entités + CRUD prêt ──────►├── Calcul utilise les entités
        │                              │
        ▼                              ▼
-  Lucas (P3 - Front Forms)     Mohamed (P4 - Dashboard)
+  Lucas (P3 - Front Forms)     Stephane (P4 - Dashboard)
        │                              │
        ├── Formulaire appelle ────────┤── Dashboard appelle les mêmes endpoints
        │   les endpoints              │
        ▼                              ▼
-  Stephane (P5 - Mobile)       Mehdi (P6 - Intégration)
+  Mohamed (P5 - Mobile)       Mehdi (P6 - Intégration)
        │                              │
        ├── Mobile appelle ────────────┤── Teste tout, debug, polish
        │   les mêmes endpoints        │
@@ -638,8 +638,8 @@ ORDRE DE PRIORITÉ (Palier 1) :
 | Samy | Setup Spring Boot + entités + CRUD | **Endpoints sites dispo** |
 | Adam | CarbonCalculationService + /calculate | **Calcul fonctionne** |
 | Lucas | Setup Angular + routing + formulaire | Formulaire prêt (mock API) |
-| Mohamed | Setup ngx-charts + composants graphiques | Composants prêts (données statiques) |
-| Stephane | Setup React Native + navigation + écrans | Écrans de base prêts (mock) |
+| Stephane | Setup ngx-charts + composants graphiques | Composants prêts (données statiques) |
+| Mohamed | Setup React Native + navigation + écrans | Écrans de base prêts (mock) |
 | Mehdi | README + Docker + aide Adam DB | Base PostgreSQL opé |
 
 **Jour 1 — Après-midi (14h-19h) :**
@@ -649,8 +649,8 @@ ORDRE DE PRIORITÉ (Palier 1) :
 | Samy | Endpoints dashboard + breakdown |
 | Adam | JWT auth complet |
 | Lucas | Brancher front sur vraie API + liste + détail |
-| Mohamed | Brancher dashboard sur API + KPIs + graphiques |
-| Stephane | Brancher mobile sur API + login + formulaire |
+| Stephane | Brancher dashboard sur API + KPIs + graphiques |
+| Mohamed | Brancher mobile sur API + login + formulaire |
 | Mehdi | Tests intégration, debug CORS, données test |
 
 **Jour 2 — Matin (9h-13h) :**
@@ -658,7 +658,7 @@ ORDRE DE PRIORITÉ (Palier 1) :
 | Qui | Quoi |
 |---|---|
 | Tous | Finir Palier 2, attaquer Palier 3 |
-| Mohamed | Graphiques avancés, comparaison |
+| Stephane | Graphiques avancés, comparaison |
 | Adam | Export PDF |
 | Mehdi | Données de démo (3-4 sites) |
 
@@ -718,18 +718,18 @@ hackathon-26/
 │   ├── src/test/                    # Mehdi + Samy
 │   ├── Dockerfile                   # Adam
 │   └── pom.xml                      # Samy
-├── frontend/                         # Lucas + Mohamed
+├── frontend/                         # Lucas + Stephane
 │   ├── src/app/
 │   │   ├── core/                    # Lucas (services, guards, interceptors)
 │   │   ├── features/
 │   │   │   ├── auth/                # Lucas
 │   │   │   ├── sites/               # Lucas
-│   │   │   ├── dashboard/           # Mohamed
-│   │   │   └── compare/             # Lucas + Mohamed
-│   │   ├── shared/                  # Mohamed (composants graphiques) + Lucas (navbar)
+│   │   │   ├── dashboard/           # Stephane
+│   │   │   └── compare/             # Lucas + Stephane
+│   │   ├── shared/                  # Stephane (composants graphiques) + Lucas (navbar)
 │   │   └── app.routes.ts            # Lucas
 │   └── package.json
-├── mobile/                           # Stephane
+├── mobile/                           # Mohamed
 │   ├── src/
 │   │   ├── screens/
 │   │   ├── components/
