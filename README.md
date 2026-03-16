@@ -12,8 +12,8 @@
 - Samy — Backend Core (entités, CRUD, config)
 - Adam — Backend Logique (calcul carbone, JWT, Docker)
 - Lucas — Frontend Angular (formulaires, pages)
-- Mohamed — Frontend Angular (dashboard, graphiques)
-- Stephane — Mobile React Native
+- Stephane — Frontend Angular (dashboard, graphiques)
+- Mohamed — Mobile React Native
 - Mehdi — Intégration, qualité, démo
 
 ## Structure
