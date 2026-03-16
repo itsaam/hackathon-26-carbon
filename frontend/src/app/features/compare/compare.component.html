@@ -45,9 +45,10 @@
       </table>
 
       <app-bar-chart
-        [labels]="comparison.rows.map((r: any) => r.name)"
-        [values]="comparison.rows.map((r: any) => r.totalCo2Kg)"
-      />
+        *ngIf="comparison"
+        [labels]="comparisonLabels"
+        [values]="comparisonValues"
+      ></app-bar-chart>
     </div>
   </section>
 </section>

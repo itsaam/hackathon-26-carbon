@@ -21,6 +21,14 @@ export class CompareComponent implements OnInit {
   selectedIds: number[] = [];
   comparison: any;
 
+  get comparisonLabels(): string[] {
+    return this.comparison ? this.comparison.rows.map((r: any) => r.name) : [];
+  }
+
+  get comparisonValues(): number[] {
+    return this.comparison ? this.comparison.rows.map((r: any) => r.totalCo2Kg) : [];
+  }
+
   ngOnInit(): void {
     this.siteService.getSites().subscribe({
       next: (sites) => (this.sites = sites)

@@ -56,5 +56,8 @@
       }
     }
   },
-  "defaultProject": "carbon-frontend"
+  "defaultProject": "carbon-frontend",
+  "cli": {
+    "analytics": "14bf1e25-26fd-445a-8904-91931456e856"
+  }
 }
