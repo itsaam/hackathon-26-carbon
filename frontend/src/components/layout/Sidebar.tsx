@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { LayoutDashboard, Building2, GitCompareArrows, History, LogOut, ChevronLeft, ChevronRight, Menu, X, Settings2, Map } from "lucide-react";
+import { LayoutDashboard, Building2, GitCompareArrows, History, LogOut, ChevronLeft, ChevronRight, Menu, X, Settings2, Map, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ const navItems = [
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
+  const isAdmin = !!user && ((user as any).role === "ADMIN" || (user as any).role === "ROLE_ADMIN");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
@@ -34,12 +35,12 @@ export default function Sidebar() {
   const sidebarContent = (
     <>
       {/* Brand */}
-      <div className="relative flex items-center justify-center px-4 h-24 border-b border-sidebar-border">
+      <div className="relative flex items-center justify-center px-4 h-20 border-b border-sidebar-border">
         {(!collapsed || mobileOpen) ? (
           <img
             src="/logo.png"
             alt="CarbonTrack"
-            className="h-16 w-auto object-contain"
+            className="h-12 w-auto object-contain"
           />
         ) : (
           <div className="w-8 h-8 rounded-lg gradient-brand flex items-center justify-center flex-shrink-0">
@@ -76,40 +77,21 @@ export default function Sidebar() {
           );
         })}
 
-        {user && (user as any).role === "ADMIN" && (
-          <>
-            <div className="mt-4 mb-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40 px-2">
-              Administration
-            </div>
-            <NavLink
-              to="/admin/materials"
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                  isActive
-                    ? "bg-sidebar-accent text-cap-vibrant shadow-sm"
-                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                )
-              }
-            >
-              <Settings2 className="w-5 h-5 flex-shrink-0" />
-              {(!collapsed || mobileOpen) && <span>Matériaux</span>}
-            </NavLink>
-            <NavLink
-              to="/admin/energy-factors"
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                  isActive
-                    ? "bg-sidebar-accent text-cap-vibrant shadow-sm"
-                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                )
-              }
-            >
-              <Settings2 className="w-5 h-5 flex-shrink-0" />
-              {(!collapsed || mobileOpen) && <span>Facteurs énergie</span>}
-            </NavLink>
-          </>
+        {user && (
+          <NavLink
+            to="/admin"
+            className={({ isActive }) =>
+              cn(
+                "mt-4 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                isActive
+                  ? "bg-sidebar-accent text-cap-vibrant shadow-sm"
+                  : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+              )
+            }
+          >
+            <Users className="w-5 h-5 flex-shrink-0" />
+            {(!collapsed || mobileOpen) && <span>Administration</span>}
+          </NavLink>
         )}
       </nav>
 

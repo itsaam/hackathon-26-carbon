@@ -146,10 +146,10 @@ export default function SiteForm() {
           renewableSelfConsumptionRate: site.renewableSelfConsumptionRate != null ? String(site.renewableSelfConsumptionRate * 100) : "",
           activityDescription: site.activityDescription ?? "",
           notes: site.notes ?? "",
-        concreteTons: "",
-        steelTons: "",
-        glassTons: "",
-        woodTons: "",
+          concreteTons: site.concreteTons != null ? String(site.concreteTons) : "",
+          steelTons: site.steelTons != null ? String(site.steelTons) : "",
+          glassTons: site.glassTons != null ? String(site.glassTons) : "",
+          woodTons: site.woodTons != null ? String(site.woodTons) : "",
         });
       } catch (e: any) {
         toast({

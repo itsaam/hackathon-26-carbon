@@ -23,7 +23,7 @@ public class ReportController {
             @PathVariable Long siteId,
             @RequestParam(value = "year", required = false) Integer year
     ) {
-        byte[] content = reportService.generateSiteReport(siteId, year);
+        byte[] content = reportService.generateSiteReportPdf(siteId, year);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"site-" + siteId + "-report.pdf\"");

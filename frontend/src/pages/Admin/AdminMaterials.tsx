@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import PageHeader from "@/components/ui/PageHeader";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface Material {
   id?: number;
@@ -21,6 +22,7 @@ interface Material {
 export default function AdminMaterials() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Material | null>(null);
+  const navigate = useNavigate();
 
   const materialsQuery = useQuery({
     queryKey: ["admin", "materials"],
@@ -62,20 +64,22 @@ export default function AdminMaterials() {
       <PageHeader
         title="Matériaux"
         subtitle="Administration des matériaux et facteurs ACV"
+        onBack={() => navigate("/admin")}
+        backLabel="Retour à l’administration"
         actions={
           <button
-            onClick={() =>
-              setEditing({
-                name: "",
-                emissionFactor: 0,
-                unit: "tonne",
-                source: "ADEME",
-              })
-            }
-            className="inline-flex items-center gap-2 border border-border text-foreground font-medium px-4 py-2 rounded-lg hover:bg-muted transition-colors text-sm"
-          >
-            Nouveau matériau
-          </button>
+              onClick={() =>
+                setEditing({
+                  name: "",
+                  emissionFactor: 0,
+                  unit: "tonne",
+                  source: "ADEME",
+                })
+              }
+              className="inline-flex items-center gap-2 border border-border text-foreground font-medium px-4 py-2 rounded-lg hover:bg-muted transition-colors text-sm"
+            >
+              Nouveau matériau
+            </button>
         }
       />
 
@@ -98,7 +102,12 @@ export default function AdminMaterials() {
                   {m.category ?? "—"} {m.subCategory ? `· ${m.subCategory}` : ""}
                 </td>
                 <td className="px-4 py-3.5 text-muted-foreground">
-                  {m.gwpPerKg ?? m.emissionFactor} {m.gwpPerKg ? "kgCO₂e/kg" : m.unit}
+                  {m.gwpPerKg ?? m.emissionFactor}
+                  {m.gwpPerKg != null
+                    ? " kgCO₂e/kg"
+                    : m.unit === "tonne"
+                      ? " kgCO₂e/tonne"
+                      : ` ${m.unit}`}
                 </td>
                 <td className="px-4 py-3.5 text-muted-foreground">{m.source}</td>
                 <td className="px-4 py-3.5 text-right space-x-2">

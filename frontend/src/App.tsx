@@ -16,6 +16,8 @@ import History from "@/pages/History/History";
 import MapPage from "@/pages/Map";
 import AdminMaterials from "@/pages/Admin/AdminMaterials";
 import AdminEnergyFactors from "@/pages/Admin/AdminEnergyFactors";
+import AdminHome from "@/pages/Admin/AdminHome";
+import AdminUsers from "@/pages/Admin/AdminUsers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +49,8 @@ const AppRoutes = () => (
       <Route path="history" element={<History />} />
       <Route path="sites/:id/history" element={<History />} />
       <Route path="map" element={<MapPage />} />
+      <Route path="admin" element={<AdminHome />} />
+      <Route path="admin/users" element={<AdminUsers />} />
       <Route path="admin/materials" element={<AdminMaterials />} />
       <Route path="admin/energy-factors" element={<AdminEnergyFactors />} />
     </Route>

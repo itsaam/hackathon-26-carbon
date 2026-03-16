@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface EnergyFactorRepository extends JpaRepository<EnergyFactor, Long> {
     Optional<EnergyFactor> findByEnergyType(String energyType);
     List<EnergyFactor> findByYear(Integer year);
+    Optional<EnergyFactor> findTopByOrderByYearDesc();
+    List<EnergyFactor> findByEnergyTypeAndYear(String energyType, Integer year);
 }

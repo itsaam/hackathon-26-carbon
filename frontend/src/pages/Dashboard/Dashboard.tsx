@@ -91,7 +91,7 @@ export default function Dashboard() {
       <PageHeader title="Dashboard" subtitle="Vue globale des émissions carbone" />
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 mb-8">
         <KpiCard title="CO₂ Total" value={((summary?.totalCo2Kg ?? 0) / 1000).toLocaleString("fr-FR")} unit="tCO₂e" icon={Activity} variant="primary" delay={0} />
         <KpiCard title="Sites" value={summary?.nbSites ?? sites.length} icon={Building2} variant="vibrant" delay={1} />
         <KpiCard title="CO₂ moyen / m²" value={(summary?.avgCo2PerM2 ?? 0).toFixed(3)} unit="kg/m²" icon={TrendingDown} variant="green" delay={2} />

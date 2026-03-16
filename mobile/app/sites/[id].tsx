@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Linking } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { getToken } from "../../lib/auth";
 
@@ -20,6 +20,9 @@ interface CarbonResult {
   co2PerEmployee: number | null;
   constructionCo2Kg: number | null;
   exploitationCo2Kg: number | null;
+  scope1Co2Kg?: number | null;
+  scope2Co2Kg?: number | null;
+  scope3Co2Kg?: number | null;
   calculatedAt: string;
 }
 
@@ -30,6 +33,8 @@ export default function SiteDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [recalcLoading, setRecalcLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [scenarioLoading, setScenarioLoading] = useState(false);
+  const [scenarioResult, setScenarioResult] = useState<CarbonResult | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -90,6 +95,44 @@ export default function SiteDetailScreen() {
     }
   };
 
+  const handleScenarioQuick = async () => {
+    if (!id) return;
+    try {
+      setScenarioLoading(true);
+      const token = await getToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const body = {
+        energyDeltaPercent: -10,
+        renewableDeltaPercent: 20,
+      };
+      const res = await fetch(process.env.EXPO_PUBLIC_API_URL + `/api/sites/${id}/results/estimate`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        const json: CarbonResult = await res.json();
+        setScenarioResult(json);
+      }
+    } finally {
+      setScenarioLoading(false);
+    }
+  };
+
+  const handleOpenReport = async () => {
+    if (!id) return;
+    try {
+      const token = await getToken();
+      const year = new Date().getFullYear();
+      const url = `${process.env.EXPO_PUBLIC_API_URL}/api/sites/${id}/report.pdf?year=${year}`;
+      // En démo, on ouvre simplement l'URL dans le navigateur.
+      await Linking.openURL(url);
+    } catch {
+      // silencieux en démo
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -134,6 +177,20 @@ export default function SiteDetailScreen() {
         />
       </View>
 
+      {result && (result.scope1Co2Kg != null || result.scope2Co2Kg != null || result.scope3Co2Kg != null) && (
+        <View style={styles.scopeRow}>
+          {result.scope1Co2Kg != null && (
+            <Text style={styles.scopeText}>Scope 1 : {(result.scope1Co2Kg / 1000).toFixed(2)} tCO₂e</Text>
+          )}
+          {result.scope2Co2Kg != null && (
+            <Text style={styles.scopeText}>Scope 2 : {(result.scope2Co2Kg / 1000).toFixed(2)} tCO₂e</Text>
+          )}
+          {result.scope3Co2Kg != null && (
+            <Text style={styles.scopeText}>Scope 3 : {(result.scope3Co2Kg / 1000).toFixed(2)} tCO₂e</Text>
+          )}
+        </View>
+      )}
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Énergie & intensité</Text>
         <Text style={styles.sectionText}>
@@ -153,6 +210,34 @@ export default function SiteDetailScreen() {
           </>
         )}
       </View>
+
+      {result && scenarioResult && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Scénario rapide (-10 % énergie, +20 % renouvelable)</Text>
+          <Text style={styles.sectionText}>
+            CO₂ total actuel : {((result.totalCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
+          </Text>
+          <Text style={styles.sectionText}>
+            CO₂ total scénario : {((scenarioResult.totalCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
+          </Text>
+          {result.totalCo2Kg != null && scenarioResult.totalCo2Kg != null && (
+            <Text style={styles.sectionMeta}>
+              {(() => {
+                const deltaT = (scenarioResult.totalCo2Kg - result.totalCo2Kg) / 1000;
+                const baseT = (result.totalCo2Kg ?? 0) / 1000;
+                const pct = baseT > 0 ? (deltaT / baseT) * 100 : 0;
+                if (deltaT < 0) {
+                  return `Gain estimé : -${Math.abs(deltaT).toFixed(2)} tCO₂e (${Math.abs(pct).toFixed(1)} %).`;
+                }
+                if (deltaT > 0) {
+                  return `Surcoût carbone estimé : +${deltaT.toFixed(2)} tCO₂e (${pct.toFixed(1)} %).`;
+                }
+                return "Ce scénario ne change pas significativement les émissions totales.";
+              })()}
+            </Text>
+          )}
+        </View>
+      )}
 
       <View style={styles.buttonsRow}>
         <TouchableOpacity
@@ -181,6 +266,21 @@ export default function SiteDetailScreen() {
           style={[styles.button, styles.buttonSecondary]}
         >
           <Text style={styles.buttonSecondaryText}>Saisie matériaux</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleScenarioQuick}
+          disabled={scenarioLoading}
+          style={[styles.button, styles.buttonSecondary]}
+        >
+          <Text style={styles.buttonSecondaryText}>
+            {scenarioLoading ? "Scénario..." : "Scénario -10% / +20%"}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleOpenReport}
+          style={[styles.button, styles.buttonSecondary]}
+        >
+          <Text style={styles.buttonSecondaryText}>Ouvrir le rapport PDF</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -271,6 +371,16 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     fontSize: 11,
     marginTop: 4,
+  },
+  scopeRow: {
+    marginTop: 8,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  scopeText: {
+    color: "#9ca3af",
+    fontSize: 11,
   },
   buttonsRow: {
     flexDirection: "row",

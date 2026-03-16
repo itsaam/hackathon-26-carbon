@@ -49,6 +49,11 @@ public class SiteResponseDTO {
     // Informations complémentaires
     private String activityDescription;
     private String notes;
+    // Composition ACV (tonnages en t, issus de site_materials)
+    private Double concreteTons;
+    private Double steelTons;
+    private Double glassTons;
+    private Double woodTons;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Double lastCo2Total;

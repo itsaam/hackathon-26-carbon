@@ -24,6 +24,7 @@ public class AuthService {
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword())) 
                 .fullName(request.getFullName())
+                .role(request.getRole() != null ? request.getRole() : "USER")
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -56,7 +57,7 @@ public class AuthService {
                 .build();
     }
     
-    // Tes autres méthodes restent identiques
+    // Autres méthodes
     public UserDTO getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
@@ -73,11 +74,22 @@ public class AuthService {
         
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
-        
-        // Optionnel : on pourrait hasher et mettre à jour le password ici aussi
+        if (request.getRole() != null) {
+            user.setRole(request.getRole());
+        }
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        }
         
         User updatedUser = userRepository.save(user);
         return mapToDTO(updatedUser);
+    }
+
+    public java.util.List<UserDTO> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
     private UserDTO mapToDTO(User user) {
@@ -85,6 +97,7 @@ public class AuthService {
                 .id(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
+                .role(user.getRole())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

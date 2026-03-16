@@ -10,9 +10,25 @@
   - Gestion de la composition matériaux (table `site_materials`) pour une approche ACV simplifiée.
 - **Frontend web** : React + Vite + Tailwind  
   - Dashboard, liste / détail / édition de sites, comparaison, historique, administration facteurs et matériaux.  
-  - Functionalités différenciantes : **scénarios what‑if** par site, **carte / heatmap**, export de **rapport HTML** structuré.
+  - Functionalités différenciantes : **scénarios what‑if** par site, **carte / heatmap**, export de **rapport HTML/PDF** structuré.
 - **Mobile** : Expo / React Native  
   - Vue synthétique par site (quelques KPI), saisie rapide exploitation + matériaux, **historique des calculs** par site.
+
+## Alignement avec le cahier des charges
+
+- **Socle technique (Palier base)**  
+  - Backend Spring Boot + PostgreSQL + API REST opérationnel.  
+  - Saisie d’un site, calcul CO₂ (construction + exploitation) et historisation via `CarbonResult`.  
+  - Front web développé en **React** (et non Angular comme proposé dans le CDC), validé avec le client pour le hackathon.
+- **Palier 1 — Dashboard & Mobile**  
+  - Dashboard web complet : KPIs (CO₂ total, /m², /employé), graphiques, répartition construction / exploitation.  
+  - Application mobile React Native (Expo) : authentification JWT, saisie rapide terrain (énergie + matériaux), consultation des indicateurs et de l’historique.
+- **Palier 2 — Fonctions avancées & comparaison**  
+  - Comparaison de plusieurs sites (tableau + bar chart).  
+  - Historisation avancée (courbes d’évolution, page `History`).  
+  - Export de rapports site (HTML + PDF) et de scénarios (PDF comparatif réel vs scénario).  
+  - Visualisation géographique : page `Carte` avec markers colorés en fonction des tCO₂e par site (zones d’impact).  
+  - Facteurs d’émission inspirés **ADEME Base Carbone 2024** stockés en base, prêts pour une future intégration API temps réel.
 
 ## Structure du repo
 
@@ -33,17 +49,19 @@ Prérequis :
 - Maven
 - PostgreSQL (local ou via Docker)
 
-Variables principales (voir `backend/src/main/resources/application.yml`) :
+Variables principales (via variables d’environnement) :
 
-- `spring.datasource.url` (par défaut `jdbc:postgresql://localhost:5432/carbon`)
-- `spring.datasource.username`
-- `spring.datasource.password`
+- `SPRING_DATASOURCE_URL` (ex. `jdbc:postgresql://localhost:5432/carbon`)
+- `SPRING_DATASOURCE_USERNAME`
+- `SPRING_DATASOURCE_PASSWORD`
+- `APP_JWT_SECRET`
 
 ### Démarrage rapide
 
 ```sh
 cd backend
-mvn spring-boot:run
+# profil dev local (charge data.sql)
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 L’API est disponible sur `http://localhost:8080`.

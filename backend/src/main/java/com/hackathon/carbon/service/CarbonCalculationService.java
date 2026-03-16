@@ -34,8 +34,13 @@ public class CarbonCalculationService {
         int year = inventoryYear != null ? inventoryYear : nowDate.getYear();
 
         double constructionCo2Kg = calculateConstructionEmissions(site);
-        double exploitationCo2Kg = calculateExploitationEmissions(site, year);
+        ExploitationEmissions exploitation = calculateExploitationEmissions(site, year);
+        double exploitationCo2Kg = exploitation.totalCo2Kg();
         double totalCo2Kg = constructionCo2Kg + exploitationCo2Kg;
+
+        double scope1Co2Kg = exploitation.gasCo2Kg() + exploitation.fuelOilCo2Kg();
+        double scope2Co2Kg = exploitation.electricityCo2Kg() + exploitation.districtHeatingCo2Kg();
+        double scope3Co2Kg = constructionCo2Kg;
 
         Double co2PerM2 = null;
         if (site.getSurfaceM2() != null && site.getSurfaceM2() > 0) {
@@ -57,6 +62,9 @@ public class CarbonCalculationService {
                 .periodStart(LocalDate.of(year, 1, 1))
                 .periodEnd(LocalDate.of(year, 12, 31))
                 .year(year)
+                .scope1Co2Kg(scope1Co2Kg)
+                .scope2Co2Kg(scope2Co2Kg)
+                .scope3Co2Kg(scope3Co2Kg)
                 .buildingStructureCo2Kg(constructionCo2Kg)
                 .energyUseCo2Kg(exploitationCo2Kg)
                 .calculationVersion("v1.0-simple-factors")
@@ -76,8 +84,13 @@ public class CarbonCalculationService {
         int year = inventoryYear != null ? inventoryYear : nowDate.getYear();
 
         double constructionCo2Kg = calculateConstructionEmissions(site);
-        double exploitationCo2Kg = calculateExploitationEmissions(site, year);
+        ExploitationEmissions exploitation = calculateExploitationEmissions(site, year);
+        double exploitationCo2Kg = exploitation.totalCo2Kg();
         double totalCo2Kg = constructionCo2Kg + exploitationCo2Kg;
+
+        double scope1Co2Kg = exploitation.gasCo2Kg() + exploitation.fuelOilCo2Kg();
+        double scope2Co2Kg = exploitation.electricityCo2Kg() + exploitation.districtHeatingCo2Kg();
+        double scope3Co2Kg = constructionCo2Kg;
 
         Double co2PerM2 = null;
         if (site.getSurfaceM2() != null && site.getSurfaceM2() > 0) {
@@ -99,6 +112,9 @@ public class CarbonCalculationService {
                 .periodStart(LocalDate.of(year, 1, 1))
                 .periodEnd(LocalDate.of(year, 12, 31))
                 .year(year)
+                .scope1Co2Kg(scope1Co2Kg)
+                .scope2Co2Kg(scope2Co2Kg)
+                .scope3Co2Kg(scope3Co2Kg)
                 .buildingStructureCo2Kg(constructionCo2Kg)
                 .energyUseCo2Kg(exploitationCo2Kg)
                 .calculationVersion("v1.0-simple-factors")
@@ -128,7 +144,7 @@ public class CarbonCalculationService {
                 .sum();
     }
 
-    private double calculateExploitationEmissions(Site site, int year) {
+    private ExploitationEmissions calculateExploitationEmissions(Site site, int year) {
         List<EnergyFactor> factors = energyFactorRepository.findByYear(year);
 
         double electricityFactor = findFactorForEnergyType(factors, "electricity");
@@ -157,7 +173,15 @@ public class CarbonCalculationService {
             total -= avoidedKwh * electricityFactor;
         }
 
-        return Math.max(total, 0.0);
+        double totalNonNegative = Math.max(total, 0.0);
+
+        return new ExploitationEmissions(
+                totalNonNegative,
+                electricityCo2,
+                gasCo2,
+                fuelOilCo2,
+                districtHeatingCo2
+        );
     }
 
     private double findFactorForEnergyType(List<EnergyFactor> factors, String energyType) {
@@ -179,5 +203,14 @@ public class CarbonCalculationService {
 
     private double defaultZero(Double value) {
         return value != null ? value : 0.0;
+    }
+
+    private record ExploitationEmissions(
+            double totalCo2Kg,
+            double electricityCo2Kg,
+            double gasCo2Kg,
+            double fuelOilCo2Kg,
+            double districtHeatingCo2Kg
+    ) {
     }
 }

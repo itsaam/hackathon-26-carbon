@@ -5,7 +5,9 @@ import com.hackathon.carbon.dto.SiteResponseDTO;
 import com.hackathon.carbon.entity.CarbonResult;
 import com.hackathon.carbon.entity.Site;
 import com.hackathon.carbon.entity.User;
+import com.hackathon.carbon.entity.SiteMaterial;
 import com.hackathon.carbon.repository.CarbonResultRepository;
+import com.hackathon.carbon.repository.SiteMaterialRepository;
 import com.hackathon.carbon.repository.SiteRepository;
 import com.hackathon.carbon.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -24,6 +26,7 @@ public class SiteService {
 
     private final SiteRepository siteRepository;
     private final CarbonResultRepository carbonResultRepository;
+    private final SiteMaterialRepository siteMaterialRepository;
     private final UserRepository userRepository;
 
     @Transactional
@@ -156,6 +159,19 @@ public class SiteService {
                 .findFirstBySiteIdOrderByCalculatedAtDesc(site.getId())
                 .map(CarbonResult::getTotalCo2Kg)
                 .orElse(null);
+
+        Double concreteTons = null;
+        Double steelTons = null;
+        Double glassTons = null;
+        Double woodTons = null;
+        for (SiteMaterial sm : siteMaterialRepository.findBySiteId(site.getId())) {
+            Long mid = sm.getMaterial() != null ? sm.getMaterial().getId() : null;
+            double tons = (sm.getQuantity() != null ? sm.getQuantity() : 0) / 1000.0;
+            if (Long.valueOf(1L).equals(mid)) concreteTons = tons;
+            else if (Long.valueOf(2L).equals(mid)) steelTons = tons;
+            else if (Long.valueOf(4L).equals(mid)) glassTons = tons;
+            else if (Long.valueOf(5L).equals(mid)) woodTons = tons;
+        }
         
         return SiteResponseDTO.builder()
                 .id(site.getId())
@@ -194,6 +210,10 @@ public class SiteService {
                 .renewableSelfConsumptionRate(site.getRenewableSelfConsumptionRate())
                 .activityDescription(site.getActivityDescription())
                 .notes(site.getNotes())
+                .concreteTons(concreteTons)
+                .steelTons(steelTons)
+                .glassTons(glassTons)
+                .woodTons(woodTons)
                 .createdAt(site.getCreatedAt())
                 .updatedAt(site.getUpdatedAt())
                 .lastCo2Total(lastCo2Total)

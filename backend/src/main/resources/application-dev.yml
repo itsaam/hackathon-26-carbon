@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/carbon}
+    username: ${SPRING_DATASOURCE_USERNAME:carbon}
+    password: ${SPRING_DATASOURCE_PASSWORD:carbon}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -18,24 +18,13 @@ spring:
     defer-datasource-initialization: true
   sql:
     init:
-      mode: never
+      mode: always
 
 app:
   jwt:
-    secret: ${APP_JWT_SECRET}
+    secret: ${APP_JWT_SECRET:dev-secret-change-me}
     expiration: 86400000
   geocoding:
     nominatim-base-url: https://nominatim.openstreetmap.org
-    user-agent: carbon-hackathon-26-demo (local)
+    user-agent: carbon-hackathon-26-demo (dev)
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "health,info,metrics"
-  endpoint:
-    health:
-      show-details: when_authorized
-  info:
-    env:
-      enabled: true

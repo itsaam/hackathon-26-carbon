@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import PageHeader from "@/components/ui/PageHeader";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface EnergyFactor {
   id?: number;
@@ -18,6 +19,8 @@ interface EnergyFactor {
 export default function AdminEnergyFactors() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<EnergyFactor | null>(null);
+  const [ademeLoading, setAdemeLoading] = useState(false);
+  const navigate = useNavigate();
 
   const factorsQuery = useQuery({
     queryKey: ["admin", "energy-factors"],
@@ -52,6 +55,18 @@ export default function AdminEnergyFactors() {
     },
   });
 
+  const handleRefreshAdeme = async () => {
+    try {
+      setAdemeLoading(true);
+      await apiFetch<void>("/api/admin/ademe/refresh-factors", {
+        method: "POST",
+      });
+      qc.invalidateQueries({ queryKey: ["admin", "energy-factors"] });
+    } finally {
+      setAdemeLoading(false);
+    }
+  };
+
   const factors = factorsQuery.data ?? [];
 
   return (
@@ -59,20 +74,31 @@ export default function AdminEnergyFactors() {
       <PageHeader
         title="Facteurs d'énergie"
         subtitle="Administration des facteurs d'émission énergétiques"
+        onBack={() => navigate("/admin")}
+        backLabel="Retour à l’administration"
         actions={
-          <button
-            onClick={() =>
-              setEditing({
-                energyType: "electricity",
-                emissionFactor: 0,
-                source: "ADEME",
-                year: new Date().getFullYear(),
-              })
-            }
-            className="inline-flex items-center gap-2 border border-border text-foreground font-medium px-4 py-2 rounded-lg hover:bg-muted transition-colors text-sm"
-          >
-            Nouveau facteur
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleRefreshAdeme}
+              disabled={ademeLoading}
+              className="inline-flex items-center gap-2 border border-border text-foreground font-medium px-4 py-2 rounded-lg hover:bg-muted transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {ademeLoading ? "Synchronisation ADEME..." : "Rafraîchir depuis ADEME"}
+            </button>
+            <button
+              onClick={() =>
+                setEditing({
+                  energyType: "electricity",
+                  emissionFactor: 0,
+                  source: "ADEME",
+                  year: new Date().getFullYear(),
+                })
+              }
+              className="inline-flex items-center gap-2 border border-border text-foreground font-medium px-4 py-2 rounded-lg hover:bg-muted transition-colors text-sm"
+            >
+              Nouveau facteur
+            </button>
+          </div>
         }
       />
 
