@@ -1,8 +1,26 @@
 package com.hackathon.carbon.controller;
 
-import org.springframework.web.bind.annotation.RestController;
+import com.hackathon.carbon.dto.AuthRequest;
+import com.hackathon.carbon.dto.AuthResponse;
+import com.hackathon.carbon.service.AuthService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
-    // Adam implémentera les endpoints d'authentification
+
+    private final AuthService authService;
+
+    @PostMapping("/register")
+    public ResponseEntity<AuthResponse> register(@RequestBody AuthRequest request) {
+        return ResponseEntity.ok(authService.register(request));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
+        return ResponseEntity.ok(authService.login(request));
+    }
 }
