@@ -31,5 +31,19 @@ public class ReportController {
                 .headers(headers)
                 .body(content);
     }
+
+    @GetMapping("/{siteId}/report")
+    public ResponseEntity<String> getSiteReportHtml(
+            @PathVariable Long siteId,
+            @RequestParam(value = "year", required = false) Integer year
+    ) {
+        String html = reportService.generateSiteReportHtml(siteId, year);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_HTML);
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"site-" + siteId + "-report.html\"");
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(html);
+    }
 }
 

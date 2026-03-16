@@ -57,7 +57,55 @@ export default function SiteForm() {
     notes: "",
   });
 
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [addressQuery, setAddressQuery] = useState("");
+  const [addressError, setAddressError] = useState<string | null>(null);
+
   const update = (key: string, value: string) => setForm((p) => ({ ...p, [key]: value }));
+
+  // Recherche d'adresse (Nominatim) avec léger debounce
+  useEffect(() => {
+    const query = addressQuery.trim();
+    if (query.length < 5) {
+      setAddressSuggestions([]);
+      setAddressError(null);
+      return;
+    }
+
+    const handle = setTimeout(async () => {
+      try {
+        setAddressLoading(true);
+        setAddressError(null);
+        const data = await apiFetch<any[]>(`/api/geocode/search?q=${encodeURIComponent(query)}`, {
+          method: "GET",
+          auth: false,
+        });
+        setAddressSuggestions(Array.isArray(data) ? data : []);
+      } catch (e: any) {
+        setAddressError("Erreur lors de la recherche d'adresse.");
+        setAddressSuggestions([]);
+      } finally {
+        setAddressLoading(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(handle);
+  }, [addressQuery]);
+
+  const applyAddressSuggestion = (s: any) => {
+    setForm((p) => ({
+      ...p,
+      addressLine1: s.street || p.addressLine1,
+      postalCode: s.postalCode || p.postalCode,
+      city: s.city || p.city,
+      country: s.country || p.country,
+      latitude: s.lat != null ? String(s.lat) : p.latitude,
+      longitude: s.lon != null ? String(s.lon) : p.longitude,
+    }));
+    setAddressSuggestions([]);
+    setAddressError(null);
+  };
 
   useEffect(() => {
     if (!isEdit || !id) return;
@@ -116,6 +164,38 @@ export default function SiteForm() {
   const handleSubmit = async (_calcul: boolean) => {
     const surfaceM2 = Number(form.surface);
     const employeeCount = Number(form.employees);
+
+    if (!form.name.trim() || !form.surface || !form.employees) {
+      toast({
+        title: "Champs obligatoires manquants",
+        description: "Merci de renseigner au minimum le nom du site, la surface et le nombre d'employés.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!Number.isFinite(surfaceM2) || surfaceM2 <= 0 || !Number.isFinite(employeeCount) || employeeCount <= 0) {
+      toast({
+        title: "Valeurs incohérentes",
+        description: "La surface et le nombre d'employés doivent être des valeurs strictement positives.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const concrete = form.concreteTons ? Number(form.concreteTons) : 0;
+    const steel = form.steelTons ? Number(form.steelTons) : 0;
+    const glass = form.glassTons ? Number(form.glassTons) : 0;
+    const wood = form.woodTons ? Number(form.woodTons) : 0;
+
+    if (concrete < 0 || steel < 0 || glass < 0 || wood < 0) {
+      toast({
+        title: "Tonnages matériaux négatifs",
+        description: "Les tonnages de matériaux (béton, acier, verre, bois) ne peuvent pas être négatifs.",
+        variant: "destructive",
+      });
+      return;
+    }
     const workstationCount = form.workstations ? Number(form.workstations) : 0;
     const parkingBasement = form.parkingUnderSlab ? Number(form.parkingUnderSlab) : 0;
     const parkingUnderground = form.parkingUnderground ? Number(form.parkingUnderground) : 0;
@@ -191,10 +271,10 @@ export default function SiteForm() {
         await apiFetch(`/api/sites/${id}/composition`, {
           method: "POST",
           body: JSON.stringify({
-            concreteTons: form.concreteTons ? Number(form.concreteTons) : 0,
-            steelTons: form.steelTons ? Number(form.steelTons) : 0,
-            glassTons: form.glassTons ? Number(form.glassTons) : 0,
-            woodTons: form.woodTons ? Number(form.woodTons) : 0,
+            concreteTons: concrete,
+            steelTons: steel,
+            glassTons: glass,
+            woodTons: wood,
           }),
         });
 
@@ -225,10 +305,10 @@ export default function SiteForm() {
         await apiFetch(`/api/sites/${created.id}/composition`, {
           method: "POST",
           body: JSON.stringify({
-            concreteTons: form.concreteTons ? Number(form.concreteTons) : 0,
-            steelTons: form.steelTons ? Number(form.steelTons) : 0,
-            glassTons: form.glassTons ? Number(form.glassTons) : 0,
-            woodTons: form.woodTons ? Number(form.woodTons) : 0,
+            concreteTons: concrete,
+            steelTons: steel,
+            glassTons: glass,
+            woodTons: wood,
           }),
         });
       }
@@ -340,7 +420,52 @@ export default function SiteForm() {
         {/* Localisation */}
         <FormSection title="Localisation & identification">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormInput label="Adresse (ligne 1)" value={form.addressLine1} onChange={(v) => update("addressLine1", v)} placeholder="5 Rue Exemple" />
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-card-foreground mb-1.5">
+                Adresse (ligne 1)
+              </label>
+              <input
+                type="text"
+                value={form.addressLine1}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  update("addressLine1", v);
+                  setAddressQuery(v);
+                }}
+                placeholder="5 Rue Exemple, 75015 Paris"
+                className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40 transition-shadow"
+              />
+              {addressLoading && (
+                <p className="text-[11px] text-muted-foreground mt-1">Recherche d’adresses…</p>
+              )}
+              {addressError && !addressLoading && (
+                <p className="text-[11px] text-destructive mt-1">{addressError}</p>
+              )}
+              {addressSuggestions.length > 0 && (
+                <div className="mt-1 rounded-lg border border-border bg-popover shadow-lg max-h-60 overflow-y-auto text-sm">
+                  {addressSuggestions.map((s) => (
+                    <button
+                      key={s.label + String(s.lat) + String(s.lon)}
+                      type="button"
+                      onClick={() => applyAddressSuggestion(s)}
+                      className="w-full text-left px-3 py-2 hover:bg-muted transition-colors"
+                    >
+                      <span className="block text-card-foreground text-xs truncate">
+                        {s.label}
+                      </span>
+                      {(s.postalCode || s.city || s.country) && (
+                        <span className="block text-[10px] text-muted-foreground truncate">
+                          {s.postalCode} {s.city} {s.country}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Commencez à taper une adresse pour obtenir des suggestions (données OpenStreetMap, restreint à la France pour la démo).
+              </p>
+            </div>
             <FormInput label="Adresse (ligne 2)" value={form.addressLine2} onChange={(v) => update("addressLine2", v)} placeholder="Batiment B" />
             <FormInput label="Code postal" value={form.postalCode} onChange={(v) => update("postalCode", v)} placeholder="75015" />
             <FormInput label="Ville" value={form.city} onChange={(v) => update("city", v)} placeholder="Paris" />

@@ -13,6 +13,7 @@ import SiteDetail from "@/pages/Sites/SiteDetail";
 import SiteForm from "@/pages/Sites/SiteForm";
 import Compare from "@/pages/Compare/Compare";
 import History from "@/pages/History/History";
+import MapPage from "@/pages/Map";
 import AdminMaterials from "@/pages/Admin/AdminMaterials";
 import AdminEnergyFactors from "@/pages/Admin/AdminEnergyFactors";
 import NotFound from "./pages/NotFound";
@@ -45,6 +46,7 @@ const AppRoutes = () => (
       <Route path="compare" element={<Compare />} />
       <Route path="history" element={<History />} />
       <Route path="sites/:id/history" element={<History />} />
+      <Route path="map" element={<MapPage />} />
       <Route path="admin/materials" element={<AdminMaterials />} />
       <Route path="admin/energy-factors" element={<AdminEnergyFactors />} />
     </Route>

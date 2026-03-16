@@ -75,7 +75,7 @@ export default function SiteDetailScreen() {
       const token = await getToken();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const year = new Date().getFullYear();
+      const year = 2024;
       const res = await fetch(process.env.EXPO_PUBLIC_API_URL + `/api/sites/${id}/results/calculate`, {
         method: "POST",
         headers,
@@ -163,6 +163,12 @@ export default function SiteDetailScreen() {
           <Text style={styles.buttonText}>
             {recalcLoading ? "Recalcul..." : "Recalculer"}
           </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.push(`/sites/${site.id}/history` as any)}
+          style={[styles.button, styles.buttonSecondary]}
+        >
+          <Text style={styles.buttonSecondaryText}>Historique</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => router.push(`/sites/${site.id}/quick-exploitation` as any)}

@@ -24,3 +24,6 @@ app:
   jwt:
     secret: hackathon26SecretKeyForJWTTokenGenerationMustBe256BitsLong
     expiration: 86400000
+  geocoding:
+    nominatim-base-url: https://nominatim.openstreetmap.org
+    user-agent: carbon-hackathon-26-demo (local-dev)

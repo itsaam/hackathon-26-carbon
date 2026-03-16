@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useSites } from "@/hooks/useSites";
 import PageHeader from "@/components/ui/PageHeader";
 import KpiCard from "@/components/ui/KpiCard";
-import { ArrowLeft, RefreshCw, Building2, Users, Zap, Car, Cpu, MapPin, Info } from "lucide-react";
+import { ArrowLeft, RefreshCw, Building2, Users, Zap, Car, Cpu, MapPin, Info, SlidersHorizontal, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { apiFetch } from "@/lib/api";
@@ -12,6 +12,12 @@ export default function SiteDetail() {
   const { id } = useParams();
   const { getSite, getLatestResult, refetch } = useSites();
   const [recalculLoading, setRecalculLoading] = useState(false);
+  const [scenarioOpen, setScenarioOpen] = useState(false);
+  const [scenarioEnergyDelta, setScenarioEnergyDelta] = useState(-10);
+  const [scenarioRenewableDelta, setScenarioRenewableDelta] = useState(20);
+  const [scenarioLoading, setScenarioLoading] = useState(false);
+  const [scenarioResult, setScenarioResult] = useState<CarbonResult | null>(null);
+  const [scenarioError, setScenarioError] = useState<string | null>(null);
   const site = getSite(Number(id));
   const result = getLatestResult(Number(id));
 
@@ -21,8 +27,7 @@ export default function SiteDetail() {
     if (!site) return;
     try {
       setRecalculLoading(true);
-      const now = new Date();
-      const year = now.getFullYear();
+      const year = 2024; // cohérence avec les facteurs d'énergie en base
       await apiFetch(`/api/sites/${site.id}/results/calculate`, {
         method: "POST",
         body: JSON.stringify({ year }),
@@ -30,6 +35,58 @@ export default function SiteDetail() {
       await refetch();
     } finally {
       setRecalculLoading(false);
+    }
+  };
+
+  const handleOpenScenario = () => {
+    setScenarioError(null);
+    setScenarioResult(null);
+    setScenarioOpen(true);
+  };
+
+  const handleRunScenario = async () => {
+    if (!site) return;
+    try {
+      setScenarioLoading(true);
+      setScenarioError(null);
+      const body = {
+        energyDeltaPercent: scenarioEnergyDelta,
+        renewableDeltaPercent: scenarioRenewableDelta,
+      };
+      const data = await apiFetch<CarbonResult>(`/api/sites/${site.id}/results/estimate`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      setScenarioResult(data);
+    } catch (e) {
+      setScenarioError("Impossible de calculer le scénario. Réessayez plus tard.");
+    } finally {
+      setScenarioLoading(false);
+    }
+  };
+
+  const handleExportReport = async () => {
+    if (!site) return;
+    try {
+      const now = new Date();
+      const year = now.getFullYear();
+      const res = await fetch(`/api/sites/${site.id}/report`, {
+        method: "GET",
+        headers: {
+          Accept: "text/html",
+        },
+      });
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rapport-site-${site.id}-${year}.html`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      // Silencieux pour la démo
     }
   };
 
@@ -65,6 +122,18 @@ export default function SiteDetail() {
               className="inline-flex items-center gap-2 gradient-brand text-primary-foreground font-medium px-4 sm:px-5 py-2 rounded-lg text-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <RefreshCw className={`w-4 h-4 ${recalculLoading ? "animate-spin" : ""}`} /> Recalculer
+            </button>
+            <button
+              onClick={handleOpenScenario}
+              className="inline-flex items-center gap-2 border border-border text-foreground font-medium px-3 sm:px-4 py-2 rounded-lg hover:bg-muted transition-colors text-sm"
+            >
+              <SlidersHorizontal className="w-4 h-4" /> Simuler un scénario
+            </button>
+            <button
+              onClick={handleExportReport}
+              className="inline-flex items-center gap-2 border border-border text-foreground font-medium px-3 sm:px-4 py-2 rounded-lg hover:bg-muted transition-colors text-sm"
+            >
+              <FileText className="w-4 h-4" /> Exporter le rapport
             </button>
           </div>
         }
@@ -187,6 +256,107 @@ export default function SiteDetail() {
           </motion.div>
         )}
       </div>
+
+      {/* Modal scénario what-if */}
+      {scenarioOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-xl p-6 space-y-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-base font-semibold text-card-foreground">Simuler un scénario</h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Ajustez quelques leviers simples pour visualiser l’impact potentiel sur le CO₂. Le scénario n’est pas enregistré, il sert uniquement d’aide à la décision pendant l’atelier.
+                </p>
+              </div>
+              <button
+                onClick={() => setScenarioOpen(false)}
+                className="text-muted-foreground hover:text-foreground text-sm"
+              >
+                Fermer
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-card-foreground">Réduction de la consommation énergétique globale (%)</span>
+                  <span className="text-muted-foreground">{scenarioEnergyDelta}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={-50}
+                  max={0}
+                  step={1}
+                  value={scenarioEnergyDelta}
+                  onChange={(e) => setScenarioEnergyDelta(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-card-foreground">Augmentation de la production renouvelable (%)</span>
+                  <span className="text-muted-foreground">{scenarioRenewableDelta}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={scenarioRenewableDelta}
+                  onChange={(e) => setScenarioRenewableDelta(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+
+              {scenarioError && (
+                <p className="text-xs text-destructive">{scenarioError}</p>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  onClick={() => setScenarioOpen(false)}
+                  className="px-3 py-2 text-xs rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleRunScenario}
+                  disabled={scenarioLoading}
+                  className="px-4 py-2 text-xs rounded-lg gradient-brand text-primary-foreground font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {scenarioLoading ? "Calcul en cours..." : "Lancer le scénario"}
+                </button>
+              </div>
+            </div>
+
+            {result && scenarioResult && (
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="bg-muted/40 rounded-lg p-3 border border-border/60">
+                  <h3 className="font-semibold text-card-foreground mb-1.5">Situation actuelle</h3>
+                  <p className="text-muted-foreground">CO₂ total : <span className="font-semibold text-card-foreground">{(((result.totalCo2Kg ?? 0) / 1000)).toLocaleString("fr-FR")} tCO₂e</span></p>
+                  <p className="text-muted-foreground">CO₂ / m² : <span className="font-semibold text-card-foreground">{(result.co2PerM2 ?? 0).toFixed(3)} kg/m²</span></p>
+                  <p className="text-muted-foreground">CO₂ / employé : <span className="font-semibold text-card-foreground">{(result.co2PerEmployee ?? 0).toFixed(2)} kg/pers.</span></p>
+                </div>
+                <div className="bg-muted/40 rounded-lg p-3 border border-border/60">
+                  <h3 className="font-semibold text-card-foreground mb-1.5">Scénario simulé</h3>
+                  <p className="text-muted-foreground">CO₂ total : <span className="font-semibold text-card-foreground">{(((scenarioResult.totalCo2Kg ?? 0) / 1000)).toLocaleString("fr-FR")} tCO₂e</span></p>
+                  <p className="text-muted-foreground">CO₂ / m² : <span className="font-semibold text-card-foreground">{(scenarioResult.co2PerM2 ?? 0).toFixed(3)} kg/m²</span></p>
+                  <p className="text-muted-foreground">CO₂ / employé : <span className="font-semibold text-card-foreground">{(scenarioResult.co2PerEmployee ?? 0).toFixed(2)} kg/pers.</span></p>
+                  {result.totalCo2Kg != null && scenarioResult.totalCo2Kg != null && (
+                    <p className="text-muted-foreground mt-1">
+                      Delta :{" "}
+                      <span className="font-semibold text-card-foreground">
+                        {(((scenarioResult.totalCo2Kg - result.totalCo2Kg) / 1000)).toLocaleString("fr-FR")} tCO₂e
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

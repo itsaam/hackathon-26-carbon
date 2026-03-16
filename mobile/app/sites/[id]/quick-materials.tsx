@@ -36,12 +36,17 @@ export default function QuickMaterialsScreen() {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      // Pour le hackathon, on utilise simplement un recalcul complet.
-      const year = new Date().getFullYear();
-      await fetch(process.env.EXPO_PUBLIC_API_URL + `/api/sites/${id}/results/calculate`, {
+      const payload = {
+        concreteTons: values.concrete ? Number(values.concrete) : 0,
+        steelTons: values.steel ? Number(values.steel) : 0,
+        glassTons: values.glass ? Number(values.glass) : 0,
+        woodTons: values.wood ? Number(values.wood) : 0,
+      };
+
+      await fetch(process.env.EXPO_PUBLIC_API_URL + `/api/sites/${id}/composition`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ year }),
+        body: JSON.stringify(payload),
       });
 
       router.replace(`/sites/${id}` as any);
