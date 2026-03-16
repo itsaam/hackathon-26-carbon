@@ -4,12 +4,16 @@ import com.hackathon.carbon.dto.SiteRequestDTO;
 import com.hackathon.carbon.dto.SiteResponseDTO;
 import com.hackathon.carbon.entity.CarbonResult;
 import com.hackathon.carbon.entity.Site;
+import com.hackathon.carbon.entity.User;
 import com.hackathon.carbon.repository.CarbonResultRepository;
 import com.hackathon.carbon.repository.SiteRepository;
+import com.hackathon.carbon.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,6 +24,7 @@ public class SiteService {
 
     private final SiteRepository siteRepository;
     private final CarbonResultRepository carbonResultRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public SiteResponseDTO createSite(SiteRequestDTO dto) {
@@ -32,7 +37,39 @@ public class SiteService {
                 .energyConsumptionKwh(dto.getEnergyConsumptionKwh())
                 .employeeCount(dto.getEmployeeCount())
                 .workstationCount(dto.getWorkstationCount() != null ? dto.getWorkstationCount() : 0)
+                .addressLine1(dto.getAddressLine1())
+                .addressLine2(dto.getAddressLine2())
+                .postalCode(dto.getPostalCode())
+                .city(dto.getCity())
+                .country(dto.getCountry())
+                .latitude(dto.getLatitude())
+                .longitude(dto.getLongitude())
+                .internalCode(dto.getInternalCode())
+                .externalCode(dto.getExternalCode())
+                .buildingType(dto.getBuildingType())
+                .usageType(dto.getUsageType())
+                .yearOfConstruction(dto.getYearOfConstruction())
+                .yearOfRenovation(dto.getYearOfRenovation())
+                .floorsCount(dto.getFloorsCount())
+                .heatedAreaM2(dto.getHeatedAreaM2())
+                .cooledAreaM2(dto.getCooledAreaM2())
+                .occupancyDaysPerWeek(dto.getOccupancyDaysPerWeek())
+                .occupancyHoursPerDay(dto.getOccupancyHoursPerDay())
+                .averageOccupancyRate(dto.getAverageOccupancyRate())
+                .electricityConsumptionKwh(dto.getElectricityConsumptionKwh())
+                .gasConsumptionKwh(dto.getGasConsumptionKwh())
+                .fuelOilConsumptionKwh(dto.getFuelOilConsumptionKwh())
+                .districtHeatingConsumptionKwh(dto.getDistrictHeatingConsumptionKwh())
+                .renewableProductionKwh(dto.getRenewableProductionKwh())
+                .renewableSelfConsumptionRate(dto.getRenewableSelfConsumptionRate())
+                .activityDescription(dto.getActivityDescription())
+                .notes(dto.getNotes())
                 .build();
+
+        User currentUser = getCurrentUserIfAny();
+        if (currentUser != null) {
+            site.setUser(currentUser);
+        }
         
         site = siteRepository.save(site);
         return toResponseDTO(site);
@@ -40,7 +77,14 @@ public class SiteService {
 
     @Transactional(readOnly = true)
     public List<SiteResponseDTO> getAllSites() {
-        return siteRepository.findAll().stream()
+        User currentUser = getCurrentUserIfAny();
+        List<Site> sites;
+        if (currentUser != null) {
+            sites = siteRepository.findByUserId(currentUser.getId());
+        } else {
+            sites = siteRepository.findAll();
+        }
+        return sites.stream()
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -49,6 +93,7 @@ public class SiteService {
     public SiteResponseDTO getSiteById(Long id) {
         Site site = siteRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Site non trouvé avec l'ID : " + id));
+        enforceOwnership(site);
         return toResponseDTO(site);
     }
 
@@ -56,6 +101,7 @@ public class SiteService {
     public SiteResponseDTO updateSite(Long id, SiteRequestDTO dto) {
         Site site = siteRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Site non trouvé avec l'ID : " + id));
+        enforceOwnership(site);
         
         site.setName(dto.getName());
         site.setSurfaceM2(dto.getSurfaceM2());
@@ -65,6 +111,33 @@ public class SiteService {
         site.setEnergyConsumptionKwh(dto.getEnergyConsumptionKwh());
         site.setEmployeeCount(dto.getEmployeeCount());
         site.setWorkstationCount(dto.getWorkstationCount() != null ? dto.getWorkstationCount() : 0);
+        site.setAddressLine1(dto.getAddressLine1());
+        site.setAddressLine2(dto.getAddressLine2());
+        site.setPostalCode(dto.getPostalCode());
+        site.setCity(dto.getCity());
+        site.setCountry(dto.getCountry());
+        site.setLatitude(dto.getLatitude());
+        site.setLongitude(dto.getLongitude());
+        site.setInternalCode(dto.getInternalCode());
+        site.setExternalCode(dto.getExternalCode());
+        site.setBuildingType(dto.getBuildingType());
+        site.setUsageType(dto.getUsageType());
+        site.setYearOfConstruction(dto.getYearOfConstruction());
+        site.setYearOfRenovation(dto.getYearOfRenovation());
+        site.setFloorsCount(dto.getFloorsCount());
+        site.setHeatedAreaM2(dto.getHeatedAreaM2());
+        site.setCooledAreaM2(dto.getCooledAreaM2());
+        site.setOccupancyDaysPerWeek(dto.getOccupancyDaysPerWeek());
+        site.setOccupancyHoursPerDay(dto.getOccupancyHoursPerDay());
+        site.setAverageOccupancyRate(dto.getAverageOccupancyRate());
+        site.setElectricityConsumptionKwh(dto.getElectricityConsumptionKwh());
+        site.setGasConsumptionKwh(dto.getGasConsumptionKwh());
+        site.setFuelOilConsumptionKwh(dto.getFuelOilConsumptionKwh());
+        site.setDistrictHeatingConsumptionKwh(dto.getDistrictHeatingConsumptionKwh());
+        site.setRenewableProductionKwh(dto.getRenewableProductionKwh());
+        site.setRenewableSelfConsumptionRate(dto.getRenewableSelfConsumptionRate());
+        site.setActivityDescription(dto.getActivityDescription());
+        site.setNotes(dto.getNotes());
         
         site = siteRepository.save(site);
         return toResponseDTO(site);
@@ -72,10 +145,10 @@ public class SiteService {
 
     @Transactional
     public void deleteSite(Long id) {
-        if (!siteRepository.existsById(id)) {
-            throw new EntityNotFoundException("Site non trouvé avec l'ID : " + id);
-        }
-        siteRepository.deleteById(id);
+        Site site = siteRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Site non trouvé avec l'ID : " + id));
+        enforceOwnership(site);
+        siteRepository.delete(site);
     }
 
     private SiteResponseDTO toResponseDTO(Site site) {
@@ -94,9 +167,54 @@ public class SiteService {
                 .energyConsumptionKwh(site.getEnergyConsumptionKwh())
                 .employeeCount(site.getEmployeeCount())
                 .workstationCount(site.getWorkstationCount())
+                .addressLine1(site.getAddressLine1())
+                .addressLine2(site.getAddressLine2())
+                .postalCode(site.getPostalCode())
+                .city(site.getCity())
+                .country(site.getCountry())
+                .latitude(site.getLatitude())
+                .longitude(site.getLongitude())
+                .internalCode(site.getInternalCode())
+                .externalCode(site.getExternalCode())
+                .buildingType(site.getBuildingType())
+                .usageType(site.getUsageType())
+                .yearOfConstruction(site.getYearOfConstruction())
+                .yearOfRenovation(site.getYearOfRenovation())
+                .floorsCount(site.getFloorsCount())
+                .heatedAreaM2(site.getHeatedAreaM2())
+                .cooledAreaM2(site.getCooledAreaM2())
+                .occupancyDaysPerWeek(site.getOccupancyDaysPerWeek())
+                .occupancyHoursPerDay(site.getOccupancyHoursPerDay())
+                .averageOccupancyRate(site.getAverageOccupancyRate())
+                .electricityConsumptionKwh(site.getElectricityConsumptionKwh())
+                .gasConsumptionKwh(site.getGasConsumptionKwh())
+                .fuelOilConsumptionKwh(site.getFuelOilConsumptionKwh())
+                .districtHeatingConsumptionKwh(site.getDistrictHeatingConsumptionKwh())
+                .renewableProductionKwh(site.getRenewableProductionKwh())
+                .renewableSelfConsumptionRate(site.getRenewableSelfConsumptionRate())
+                .activityDescription(site.getActivityDescription())
+                .notes(site.getNotes())
                 .createdAt(site.getCreatedAt())
                 .updatedAt(site.getUpdatedAt())
                 .lastCo2Total(lastCo2Total)
                 .build();
+    }
+
+    private User getCurrentUserIfAny() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null) {
+            return null;
+        }
+        return userRepository.findByEmail(auth.getName()).orElse(null);
+    }
+
+    private void enforceOwnership(Site site) {
+        User current = getCurrentUserIfAny();
+        if (current == null) {
+            return;
+        }
+        if (site.getUser() != null && !site.getUser().getId().equals(current.getId()) && !"ADMIN".equalsIgnoreCase(current.getRole())) {
+            throw new EntityNotFoundException("Site non trouvé avec l'ID : " + site.getId());
+        }
     }
 }

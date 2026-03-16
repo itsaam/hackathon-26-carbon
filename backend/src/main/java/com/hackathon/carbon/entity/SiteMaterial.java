@@ -32,4 +32,16 @@ public class SiteMaterial {
 
     @Column(nullable = false)
     private Double quantity;
+
+    @Column(name = "unit")
+    private String unit;
+
+    @Column(name = "area_m2")
+    private Double areaM2;
+
+    @Column(name = "volume_m3")
+    private Double volumeM3;
+
+    @Column(name = "life_cycle_stage")
+    private String lifeCycleStage;
 }

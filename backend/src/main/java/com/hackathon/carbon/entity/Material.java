@@ -1,9 +1,19 @@
 package com.hackathon.carbon.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "materials")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Material {
 
     @Id
@@ -17,33 +27,32 @@ public class Material {
     private Double emissionFactor;
 
     @Column(nullable = false)
+    @Builder.Default
     private String unit = "tonne";
 
     @Column(nullable = false)
+    @Builder.Default
     private String source = "ADEME";
 
-    public Material() {}
+    // Catégorisation et données ACV
+    @Column(name = "category")
+    private String category;
 
-    public Material(Long id, String name, Double emissionFactor, String unit, String source) {
-        this.id = id;
-        this.name = name;
-        this.emissionFactor = emissionFactor;
-        this.unit = unit != null ? unit : "tonne";
-        this.source = source != null ? source : "ADEME";
-    }
+    @Column(name = "sub_category")
+    private String subCategory;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    @Column(name = "density_kg_m3")
+    private Double density;
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    @Column(name = "life_cycle_stage_covered")
+    private String lifeCycleStageCovered;
 
-    public Double getEmissionFactor() { return emissionFactor; }
-    public void setEmissionFactor(Double emissionFactor) { this.emissionFactor = emissionFactor; }
+    @Column(name = "gwp_per_kg")
+    private Double gwpPerKg;
 
-    public String getUnit() { return unit; }
-    public void setUnit(String unit) { this.unit = unit; }
+    @Column(name = "reference_year")
+    private Integer referenceYear;
 
-    public String getSource() { return source; }
-    public void setSource(String source) { this.source = source; }
+    @Column(name = "data_source_url", length = 1000)
+    private String dataSourceUrl;
 }

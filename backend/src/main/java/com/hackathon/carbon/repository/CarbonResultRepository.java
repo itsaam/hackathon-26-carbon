@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface CarbonResultRepository extends JpaRepository<CarbonResult, Long> {
     List<CarbonResult> findBySiteIdOrderByCalculatedAtDesc(Long siteId);
     Optional<CarbonResult> findFirstBySiteIdOrderByCalculatedAtDesc(Long siteId);
+    List<CarbonResult> findAllByOrderByCalculatedAtDesc();
+    List<CarbonResult> findBySiteIdAndYearOrderByCalculatedAtDesc(Long siteId, Integer year);
 }

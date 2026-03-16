@@ -31,6 +31,18 @@ public class User {
     @Column(name = "full_name")
     private String fullName;
 
+    @Column(name = "role")
+    private String role;
+
+    @Column(name = "preferred_language")
+    private String preferredLanguage;
+
+    @Column(name = "theme")
+    private String theme;
+
+    @Column(name = "organization")
+    private String organization;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

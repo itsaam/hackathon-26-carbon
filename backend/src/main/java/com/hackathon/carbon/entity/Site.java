@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -53,6 +54,95 @@ public class Site {
     @Column(name = "workstation_count")
     @Builder.Default
     private Integer workstationCount = 0;
+
+    // Localisation et identification
+    @Column(name = "address_line1")
+    private String addressLine1;
+
+    @Column(name = "address_line2")
+    private String addressLine2;
+
+    @Column(name = "postal_code")
+    private String postalCode;
+
+    @Column(name = "city")
+    private String city;
+
+    @Column(name = "country")
+    private String country;
+
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
+    @Column(name = "internal_code")
+    private String internalCode;
+
+    @Column(name = "external_code")
+    private String externalCode;
+
+    // Typologie et usage
+    @Column(name = "building_type")
+    private String buildingType;
+
+    @Column(name = "usage_type")
+    private String usageType;
+
+    @Column(name = "year_of_construction")
+    private Integer yearOfConstruction;
+
+    @Column(name = "year_of_renovation")
+    private Integer yearOfRenovation;
+
+    @Column(name = "floors_count")
+    private Integer floorsCount;
+
+    @Column(name = "heated_area_m2")
+    private Double heatedAreaM2;
+
+    @Column(name = "cooled_area_m2")
+    private Double cooledAreaM2;
+
+    // Profil d'occupation
+    @Column(name = "occupancy_days_per_week")
+    private Integer occupancyDaysPerWeek;
+
+    @Column(name = "occupancy_hours_per_day")
+    private Integer occupancyHoursPerDay;
+
+    @Column(name = "average_occupancy_rate")
+    private Double averageOccupancyRate;
+
+    // Données énergétiques détaillées
+    @Column(name = "electricity_consumption_kwh")
+    private Double electricityConsumptionKwh;
+
+    @Column(name = "gas_consumption_kwh")
+    private Double gasConsumptionKwh;
+
+    @Column(name = "fuel_oil_consumption_kwh")
+    private Double fuelOilConsumptionKwh;
+
+    @Column(name = "district_heating_consumption_kwh")
+    private Double districtHeatingConsumptionKwh;
+
+    @Column(name = "renewable_production_kwh")
+    private Double renewableProductionKwh;
+
+    @Column(name = "renewable_self_consumption_rate")
+    private Double renewableSelfConsumptionRate;
+
+    // Informations complémentaires
+    @Column(name = "open_since")
+    private LocalDate openSince;
+
+    @Column(name = "activity_description", length = 2000)
+    private String activityDescription;
+
+    @Column(name = "notes", length = 4000)
+    private String notes;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

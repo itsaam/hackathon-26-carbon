@@ -1,22 +1,21 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
+    "target": "ES2017",
+    "module": "ESNext",
     "jsx": "react-jsx",
-    "strict": true,
     "moduleResolution": "node",
-    "allowJs": false,
+    "allowJs": true,
+    "checkJs": true,
+    "strict": true,
     "noEmit": true,
-    "isolatedModules": true,
-    "resolveJsonModule": true,
-    "types": [
-      "react-native",
-      "jest"
-    ]
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "types": ["node"]
   },
   "include": [
-    "src",
-    "App.tsx"
-  ],
-  "extends": "expo/tsconfig.base"
+    "app/**/*",
+    "**/*.ts",
+    "**/*.tsx"
+  ]
 }
+

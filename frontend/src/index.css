@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 215 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    --primary: 200 100% 34%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 193 85% 46%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 14% 46%;
+
+    --accent: 193 85% 46%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 20% 90%;
+    --input: 214 20% 90%;
+    --ring: 200 100% 34%;
+
+    --radius: 0.75rem;
+
+    /* Capgemini extended palette */
+    --cap-blue: 200 100% 34%;
+    --cap-vibrant: 193 85% 46%;
+    --cap-deep-purple: 265 60% 42%;
+    --cap-tech-red: 0 72% 51%;
+    --cap-zest-green: 152 60% 42%;
+    --cap-grey-50: 210 20% 98%;
+    --cap-grey-100: 210 20% 94%;
+    --cap-grey-200: 214 20% 90%;
+    --cap-grey-700: 215 14% 34%;
+    --cap-grey-900: 215 25% 15%;
+
+    /* Dark surfaces */
+    --cap-dark-bg: 215 30% 10%;
+    --cap-dark-card: 215 25% 14%;
+    --cap-dark-card-alt: 215 22% 18%;
+
+    /* Gradients */
+    --gradient-brand: linear-gradient(135deg, hsl(200 100% 34%), hsl(193 85% 46%));
+    --gradient-hero: linear-gradient(160deg, hsl(215 30% 10%), hsl(215 25% 18%), hsl(200 100% 34% / 0.2));
+    --gradient-card-glow: linear-gradient(135deg, hsl(200 100% 34% / 0.08), hsl(193 85% 46% / 0.04));
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px hsl(215 30% 10% / 0.06);
+    --shadow-md: 0 4px 12px hsl(215 30% 10% / 0.08);
+    --shadow-lg: 0 10px 30px hsl(215 30% 10% / 0.12);
+    --shadow-glow: 0 0 30px hsl(193 85% 46% / 0.15);
+
+    --sidebar-background: 215 30% 10%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 200 100% 34%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 25% 18%;
+    --sidebar-accent-foreground: 210 20% 94%;
+    --sidebar-border: 215 22% 20%;
+    --sidebar-ring: 193 85% 46%;
+  }
+
+  .dark {
+    --background: 215 30% 10%;
+    --foreground: 210 20% 94%;
+
+    --card: 215 25% 14%;
+    --card-foreground: 210 20% 94%;
+
+    --popover: 215 25% 14%;
+    --popover-foreground: 210 20% 94%;
+
+    --primary: 193 85% 46%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 200 100% 34%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 215 22% 18%;
+    --muted-foreground: 215 14% 60%;
+
+    --accent: 193 85% 46%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 22% 20%;
+    --input: 215 22% 20%;
+    --ring: 193 85% 46%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+@layer utilities {
+  .gradient-brand {
+    background: linear-gradient(135deg, hsl(var(--cap-blue)), hsl(var(--cap-vibrant)));
+  }
+
+  .gradient-hero {
+    background: linear-gradient(160deg, hsl(var(--cap-dark-bg)), hsl(var(--cap-dark-card-alt)), hsl(var(--cap-blue) / 0.2));
+  }
+
+  .gradient-card-glow {
+    background: linear-gradient(135deg, hsl(var(--cap-blue) / 0.08), hsl(var(--cap-vibrant) / 0.04));
+  }
+
+  .shadow-glow {
+    box-shadow: 0 0 30px hsl(var(--cap-vibrant) / 0.15);
+  }
+
+  .text-gradient-brand {
+    background: linear-gradient(135deg, hsl(var(--cap-blue)), hsl(var(--cap-vibrant)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}

@@ -26,6 +26,12 @@ public class EnergyFactor {
     @Column(name = "emission_factor", nullable = false)
     private Double emissionFactor;
 
+    @Column(name = "country")
+    private String country;
+
+    @Column(name = "region")
+    private String region;
+
     @Column(nullable = false)
     @Builder.Default
     private String source = "ADEME";
@@ -33,4 +39,10 @@ public class EnergyFactor {
     @Column(nullable = false)
     @Builder.Default
     private Integer year = 2024;
+
+    @Column(name = "gwp_per_kwh")
+    private Double gwpPerKwh;
+
+    @Column(name = "data_source_url", length = 1000)
+    private String dataSourceUrl;
 }

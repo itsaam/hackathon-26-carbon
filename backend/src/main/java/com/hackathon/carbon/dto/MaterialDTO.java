@@ -11,4 +11,11 @@ public class MaterialDTO {
     private Double emissionFactor;
     private String unit;
     private String source;
+    private String category;
+    private String subCategory;
+    private Double density;
+    private String lifeCycleStageCovered;
+    private Double gwpPerKg;
+    private Integer referenceYear;
+    private String dataSourceUrl;
 }
