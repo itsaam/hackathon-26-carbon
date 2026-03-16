@@ -1,30 +1,34 @@
 .bars {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
 .bar-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .bar-label {
   min-width: 120px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .bar-track {
   flex: 1;
-  height: 10px;
-  border-radius: 999px;
-  background: rgba(30, 64, 175, 0.2);
+  height: 24px;
+  background: #c8e6c9;
+  border: 2px solid #1a2e1a;
 }
 
 .bar-fill {
   height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #22c55e, #0ea5e9);
+  background: #2e7d32;
+  border-right: 2px solid #1a2e1a;
+  transition: width 0.3s ease;
 }
-

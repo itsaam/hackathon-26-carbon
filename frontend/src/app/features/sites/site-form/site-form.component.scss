@@ -1,11 +1,11 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  background: var(--bg-surface);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  box-shadow: var(--shadow-soft);
+  gap: 2rem;
+  background: #f0f7f0;
+  border: 3px solid #1a2e1a;
+  box-shadow: 6px 6px 0px #1a2e1a;
+  padding: 2rem;
 }
 
 .grid {
@@ -18,21 +18,15 @@ label {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  font-size: 0.9rem;
-}
-
-input,
-select {
-  border-radius: 0.55rem;
-  border: 1px solid var(--border-subtle);
-  padding: 0.5rem 0.75rem;
-  background: #020617;
-  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .materials {
-  border-top: 1px solid rgba(148, 163, 184, 0.3);
-  padding-top: 1rem;
+  border-top: 3px solid #1a2e1a;
+  padding-top: 1.5rem;
 }
 
 .materials-header {
@@ -40,6 +34,13 @@ select {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
+}
+
+.materials-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .materials-list {
@@ -54,21 +55,3 @@ select {
   gap: 0.75rem;
   align-items: center;
 }
-
-.btn {
-  @extend .btn;
-}
-
-.btn-primary {
-  @extend .btn-primary;
-  align-self: flex-start;
-}
-
-.btn-secondary {
-  @extend .btn-secondary;
-}
-
-.btn-ghost {
-  @extend .btn-ghost;
-}
-
