@@ -124,6 +124,10 @@ public class CarbonCalculationService {
                 .build();
     }
 
+    /**
+     * CDC : CO₂_construction = Σ (quantité_tonnes × facteur_kgCO₂e/tonne).
+     * SiteMaterial.quantity est en kg ; Material.emissionFactor en kgCO₂e/tonne → gwpPerKg = factor/1000.
+     */
     private double calculateConstructionEmissions(Site site) {
         List<SiteMaterial> siteMaterials = siteMaterialRepository.findBySiteId(site.getId());
 
@@ -133,7 +137,7 @@ public class CarbonCalculationService {
                     double quantityKg = sm.getQuantity() != null ? sm.getQuantity() : 0.0;
                     Double gwpPerKg = material.getGwpPerKg();
                     if (gwpPerKg == null && material.getEmissionFactor() != null) {
-                        // Si le facteur est fourni en kgCO2e/tonne, le convertir en kgCO2e/kg
+                        // facteur en kgCO2e/tonne → kgCO2e/kg
                         gwpPerKg = material.getEmissionFactor() / 1000.0;
                     }
                     if (gwpPerKg == null) {

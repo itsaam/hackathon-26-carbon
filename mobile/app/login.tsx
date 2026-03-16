@@ -57,6 +57,9 @@ export default function LoginScreen() {
       <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
         {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.buttonText}>Se connecter</Text>}
       </TouchableOpacity>
+      <TouchableOpacity style={styles.linkButton} onPress={() => router.push("/register")}>
+        <Text style={styles.linkText}>Créer un compte</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -105,6 +108,14 @@ const styles = StyleSheet.create({
     color: "#f97373",
     marginBottom: 4,
     fontSize: 13,
+  },
+  linkButton: {
+    marginTop: 16,
+    alignItems: "center",
+  },
+  linkText: {
+    color: "#a5b4fc",
+    fontSize: 14,
   },
 });
 

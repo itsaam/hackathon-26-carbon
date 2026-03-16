@@ -40,14 +40,25 @@ public class CarbonResultController {
             @PathVariable Long siteId,
             @RequestParam(value = "year", required = false) Integer year
     ) {
+        return ResponseEntity.ok(getSiteResultsList(siteId, year));
+    }
+
+    /**
+     * Alias CDC : GET /api/sites/{id}/history — même réponse que /api/sites/{id}/results (courbes d'évolution).
+     */
+    @GetMapping("/sites/{siteId}/history")
+    public ResponseEntity<List<CarbonResultDTO>> getSiteHistory(
+            @PathVariable Long siteId,
+            @RequestParam(value = "year", required = false) Integer year
+    ) {
+        return ResponseEntity.ok(getSiteResultsList(siteId, year));
+    }
+
+    private List<CarbonResultDTO> getSiteResultsList(Long siteId, Integer year) {
         List<CarbonResult> raw = (year != null)
                 ? carbonResultRepository.findBySiteIdAndYearOrderByCalculatedAtDesc(siteId, year)
                 : carbonResultRepository.findBySiteIdOrderByCalculatedAtDesc(siteId);
-
-        List<CarbonResultDTO> results = raw.stream()
-                .map(this::toDTO)
-                .toList();
-        return ResponseEntity.ok(results);
+        return raw.stream().map(this::toDTO).toList();
     }
 
     @GetMapping("/sites/{siteId}/results/summary")

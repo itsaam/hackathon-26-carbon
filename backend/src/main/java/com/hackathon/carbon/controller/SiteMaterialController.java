@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
 
+/**
+ * Composition matériaux des sites. Les DTO reçoivent des tonnes (CDC) ; stockage en kg pour le calcul.
+ */
 @RestController
 @RequestMapping("/api/sites")
 @RequiredArgsConstructor
@@ -47,6 +50,7 @@ public class SiteMaterialController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Convertis tonnes (CDC) en kg pour persistance ; Material.emissionFactor est en kgCO₂e/tonne. */
     private void createIfPositive(Site site, Long materialId, Double tons) {
         if (tons == null || tons <= 0) {
             return;

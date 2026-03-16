@@ -1,7 +1,9 @@
 package com.hackathon.carbon.controller;
 
+import com.hackathon.carbon.dto.BreakdownDTO;
 import com.hackathon.carbon.dto.SiteRequestDTO;
 import com.hackathon.carbon.dto.SiteResponseDTO;
+import com.hackathon.carbon.service.BreakdownService;
 import com.hackathon.carbon.service.SiteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import java.util.List;
 public class SiteController {
 
     private final SiteService siteService;
+    private final BreakdownService breakdownService;
 
     @PostMapping
     public ResponseEntity<SiteResponseDTO> createSite(@Valid @RequestBody SiteRequestDTO dto) {
@@ -34,6 +37,11 @@ public class SiteController {
     public ResponseEntity<SiteResponseDTO> getSiteById(@PathVariable Long id) {
         SiteResponseDTO site = siteService.getSiteById(id);
         return ResponseEntity.ok(site);
+    }
+
+    @GetMapping("/{id}/breakdown")
+    public ResponseEntity<BreakdownDTO> getBreakdown(@PathVariable Long id) {
+        return ResponseEntity.ok(breakdownService.getBreakdown(id));
     }
 
     @PutMapping("/{id}")
