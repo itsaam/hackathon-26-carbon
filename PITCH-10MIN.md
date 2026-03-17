@@ -1,126 +1,142 @@
 # Pitch 10 minutes — Empreinte Carbone Site Physique
 
-## 0–2 min — Problème & vision
+## 0–2 min — Introduction & vision (slides 1–4)
 
-- Les grands campus tertiaires concentrent une part majeure de l’empreinte carbone des entreprises, mais :
-  - Les données sont éparpillées (factures, GTC, fichiers Excel, audits ponctuels).
-  - Les décisions (rénovation, déménagement, flex office) sont souvent prises sans simulation carbone fiable.
-- Vision : une plateforme unifiée pour :
-  - Consolider les données **construction + exploitation** par site.
-  - Simuler simplement des scénarios (énergie, renouvelable, occupation).
-  - Donner une vue cohérente web + mobile aux équipes immobilières et aux directions RSE.
-- Socle technique conforme au cahier des charges :
-  - **Backend** : Java **Spring Boot** exposant des APIs REST, architecture modulaire.
-  - **Base de données** : **PostgreSQL** pour le stockage et l’historisation des calculs.
-  - **Front web** : **React**, pour une interface moderne, réactive et facilement composable.
-  - **Mobile** : **React Native**, pour une application terrain réactive, avec une logique proche de React web.
-  - **Sécurité** : authentification **JWT**, exécutable en local ou via **Docker** pour un déploiement multi‑campus.
-  - **Facteurs d’émission** : connexion déjà opérationnelle à l’API **Base Carbone ADEME** pour récupérer les facteurs à jour.
-- Pourquoi ce choix technologique ?
-  - React côté web : bibliothèque très utilisée, idéale pour construire rapidement un dashboard riche en composants réutilisables, tout en restant proche de l’écosystème moderne (hooks, TypeScript).
-  - React Native côté mobile : on reste dans le même paradigme **React** (composants, hooks, TypeScript), ce qui permet de mutualiser les compétences et une partie de la logique (modèles de données, appels API) entre web et mobile.
-  - L’ensemble forme un socle **cohérent et industrialisable** pour un déploiement réel.
+- « Bonjour, on est l’équipe **CarbonTrack**.  
+  Notre objectif : donner aux organisations un outil simple pour **mesurer, comparer et piloter** l’empreinte carbone de leurs sites physiques. »
+- Les grandes entreprises possèdent des dizaines de sites (bureaux, campus, parkings), mais très peu savent réellement **quelle est l’empreinte carbone de chaque site**.
+- Les données sont dispersées entre factures énergétiques, fichiers Excel et audits ponctuels.  
+  Résultat : les décisions immobilières (rénovation, déménagement, flex office) sont souvent prises **sans visibilité carbone fiable**.
+- Notre solution : **une plateforme web + mobile** qui permet :
+  - de mesurer l’empreinte carbone **construction + exploitation** d’un site,
+  - de **visualiser** les émissions,
+  - de **comparer** plusieurs sites,
+  - et de **simuler** des scénarios de réduction carbone.
 
-Transition : « On va vous montrer comment, en 2 jours de hackathon, on a posé ce socle technique, côté backend, web et mobile. »
+- Socle technique (en 30 secondes, aligné cahier des charges) :
+  - **Backend** Java Spring Boot exposant des APIs REST.
+  - **Base PostgreSQL** pour stocker sites, calculs et historique.
+  - **Front web Angular** pour le dashboard multi‑sites.
+  - **Application mobile React Native** pour la saisie terrain.
+  - Authentification **JWT** et connexion déjà opérationnelle à l’API **Base Carbone ADEME** pour les facteurs d’émission.
 
-## 2–6 min — Démo web
+Transition : « On va maintenant vous montrer comment ce socle se traduit côté web et côté mobile. »
 
-### 2–3 min — Création et calcul d’un site
+---
 
-Pré‑requis à l’écran : on est connecté sur l’application web **Angular**, qui consomme les APIs Spring Boot sécurisées par JWT.
+## 2–6 min — Expérience desktop / web (slides 5, 7, 8)
 
-1. Connexion sur l’application web (login).  
-2. Navigation vers **Sites → Nouveau site**.
-3. Remplir le formulaire :
-   - Informations générales : nom, surface, nombre d’employés, parkings.
-   - Énergie : consommation totale + détail électricité / gaz / chauffage urbain.
-   - Typologie : type de bâtiment, usage, année de construction.
-   - Profil d’occupation : jours/semaine, heures/jour, taux d’occupation.
-   - Composition ACV : tonnages de béton, acier, verre, bois.
-4. Enregistrer et lancer le calcul (année **2024**, cohérente avec les facteurs ADEME en base).
-5. Arriver sur la fiche site :
-   - KPI : **CO₂ total (tCO₂e), CO₂/m², CO₂/employé**.
+### 2–3 min — Vue d’ensemble web : liste des sites
+
+Phrase d’accroche : « Côté desktop, la vue web permet le **pilotage carbone multi‑sites**. »
+
+1. Afficher la page de liste des sites :
+   - Pour chaque site : surface, énergie, nombre d’employés, dernier calcul de CO₂.
+   - On voit immédiatement quels sites sont les plus émetteurs.
+2. Ouvrir un site :
+   - Fiche avec les **KPI clés** : CO₂ total (tCO₂e), CO₂/m², CO₂/employé.
    - Répartition **construction vs exploitation**.
-   - Informations de localisation et typologie.
 
-Message clé : « En quelques champs clés, on obtient une photo carbone par site, homogène sur 2024. »
+Message clé : « L’interface web donne une vue consolidée de tout le parc immobilier, avec les KPI carbone comparables d’un site à l’autre. »
 
 ### 3–4 min — Historique & comparaison
+
+Phrase d’accroche : « Une fois le site créé, l’enjeu est de suivre l’impact des actions dans le temps et de comparer les sites entre eux. »
 
 1. Depuis la fiche site, cliquer sur **Historique** :
    - Montrer la courbe d’évolution du CO₂ dans le temps.
    - Insister sur le badge **Dernier** pour le calcul le plus récent.
+   - Commentaire métier : « Cela permet de suivre l’impact des actions de réduction dans le temps. »
 2. Revenir au menu et ouvrir **Comparer** :
    - Sélectionner plusieurs sites, visualiser le tableau comparatif (total, /m², /employé).
    - Montrer le graphe barres pour comparer visuellement les sites.
+   - Commentaire métier : « Les directions immobilières peuvent ainsi prioriser les sites les plus émetteurs. »
 
 Message clé : « On peut prioriser les sites à traiter et suivre l’impact des actions dans le temps. »
 
 ### 4–5 min — Carte / heatmap des sites
+
+Phrase d’accroche : « Pour un directeur immobilier, une carte est bien plus parlante qu’un tableau. »
 
 1. Ouvrir l’entrée **Carte** dans la sidebar.
 2. Montrer les markers :
    - Couleur / taille en fonction du total CO₂.
    - Tooltip avec nom du site + tCO₂e.
 
-Message clé : « Pour un directeur immobilier, visualiser l’empreinte site par site sur une carte est beaucoup plus parlant qu’un tableau. »
+Message clé : « La heatmap permet d’identifier en un coup d’œil les sites les plus émetteurs. »
 
-### 5–6 min — Scénarios what‑if & export de rapport
+### 5–6 min — Scénarios what‑if & export
+
+Phrase d’accroche : « Avant d’investir des millions dans des travaux, on a besoin de tester des scénarios. »
 
 1. Retour sur un site, cliquer sur **Simuler un scénario** :
    - Jouer sur 2 curseurs : réduction de la consommation énergétique, augmentation de la production renouvelable.
    - Montrer la comparaison **situation actuelle vs scénario** (total, /m², /employé, delta).
+   - Insister : « Cela permet de tester différents scénarios avant de lancer un investissement réel. »
    - Préciser que le scénario **n’est pas enregistré** et sert de support d’atelier décisionnel.
-2. Cliquer sur **Exporter le rapport** :
-   - Télécharger le rapport HTML.
-   - Afficher rapidement le rendu : sections, tableaux, explications (base pour futur PDF institutionnel).
+2. Montrer l’**export** :
+   - Télécharger un rapport (HTML aujourd’hui, futur PDF).
+   - Rappeler que ce rapport peut être partagé en comité immobilier / RSE.
 
-Message clé : « On passe d’une vue statique à un outil d’aide à la décision, avec un rapport partageable. »
+Message clé : « On passe d’une vue statique à un véritable outil d’aide à la décision. »
 
-## 6–8 min — Démo mobile
+---
 
-### 6–7 min — Vue site & recalcul rapide
+## 6–8 min — Expérience mobile (slide 9)
+
+### 6–7 min — Liste des sites & KPI sur mobile
+
+Phrase d’accroche : « Le mobile transforme la plateforme en outil terrain, directement dans le bâtiment. »
 
 1. Ouvrir l’app mobile (Expo / React Native) et se connecter.
 2. Afficher la **liste des sites** : superficie, employés, dernier CO₂ si disponible.
 3. Ouvrir un site :
-   - KPI synthétiques (CO₂ total, /m², /employé).
-   - Bouton **Recalculer** (année 2024).
-4. Montrer le bouton **Historique** :
-   - Liste simple des calculs (date + CO₂ total + badge Dernier).
+   - KPI synthétiques : CO₂ total, CO₂/m², CO₂/employé, badge « Dernier calcul ».
 
-Message clé : « Sur le terrain, un responsable de site a accès en quelques secondes à ses chiffres clés. »
+Message clé : « Les KPI carbone de chaque site sont mis à jour en temps réel dans la poche des équipes. »
 
-### 7–8 min — Saisie rapide exploitation / matériaux
+### 7–8 min — Saisie terrain & recalcul
 
 1. Depuis le détail du site, ouvrir **Saisie exploitation** :
-   - Mettre à jour les consommations en MWh/an.
-   - Sauvegarder → recalcul automatique, retour sur la fiche.
+   - Mettre à jour les consommations en MWh/an d’électricité, de gaz, etc.
 2. Ouvrir **Saisie matériaux** :
-   - Saisir quelques tonnages de béton, acier, bois.
-   - Sauvegarder → envoi au backend (`/composition`) pour alimenter la partie construction.
+   - Saisir les tonnages de béton, acier, bois.
+3. Expliquer le flux technique :
+   - Les formulaires envoient les données via API Spring Boot.
+   - Les données sont stockées en PostgreSQL.
+   - Un **nouveau calcul** est lancé avec les facteurs ADEME.
+   - L’historique est enrichi et les dashboards web sont automatiquement alignés.
 
-Message clé : « Le mobile permet de capturer des données directement depuis le site, sans repasser par Excel. »
+Message clé : « Le mobile permet de capturer les données directement depuis le site, sans repasser par Excel, avec un recalcul immédiat cohérent avec le web. »
 
-## 8–10 min — Roadmap & innovation
+---
 
-1. **Renforcement méthodologique**
-   - Connexion à la **Base Carbone ADEME** en temps réel et multi‑pays (déjà opérationnelle dans notre socle).
-   - Gestion multi‑annuelles (2024+, scénarios d’évolution du mix énergétique).
-2. **ACV et data enrichies**
+## 8–10 min — Roadmap & évolutions possibles (slide 10)
+
+**Court terme (6–12 mois)**  
+1. Renforcement méthodologique
+   - Amélioration du calcul ACV construction vs exploitation.
+   - Gestion multi‑annuelles (2024+, scénarios d’évolution du mix énergétique) avec la Base Carbone ADEME.
+
+2. ACV et data enrichies
    - Détail par lots (structure, façade, CVC, second œuvre, mobilité pendulaire…).
-   - Intégration SI : factures, GMAO, IoT, GTB.
-   - À venir : mise en place d’un module d’**OCR** pour scanner et analyser automatiquement les **DPE** et rapports techniques, afin de pré‑remplir les données d’entrée.
-3. **Pilotage multi‑campus**
-   - Agrégation par pays, région, typologie.
-   - Objectifs alignés SBTi, trajectoires et alertes.
-4. **Ouverture produit**
-   - Intégration dans les outils existants Capgemini / clients (portails RSE, Power BI, etc.).
-   - API ouverte pour exposer les indicateurs à d’autres briques (finance, achats, RH).
-5. **Industrialisation & déploiement**
-   - Cible technique : stack standard Capgemini (Spring Boot, Angular, React Native, PostgreSQL, Docker) pour un déploiement multi‑campus industrialisable.
-   - Organisation cible : une petite squad produit (1 PO, 2–3 dev fullstack, 1 data/ACV, 1 ops) capable de maintenir la plateforme et d’ajouter progressivement des connecteurs (factures, IoT, GTB).
-   - Coûts & time‑to‑market : en réutilisant au maximum les briques existantes Capgemini (SSO, monitoring, CI/CD), on vise un premier déploiement pilote en 3–4 mois, avec des coûts infra limités à un cluster mutualisé entre plusieurs sites.
+   - Intégration SI : factures énergétiques, GMAO, IoT, GTB.
+   - Mise en place d’un module d’**OCR** pour analyser automatiquement les **DPE** et rapports techniques et pré‑remplir les données.
 
-Conclusion : « En deux jours, on a posé un socle cohérent backend + web + mobile, déjà utilisable pour animer un atelier de décision sur un portefeuille de sites. La suite, c’est d’industrialiser les connecteurs de données et d’enrichir la méthodologie carbone. »
+**Moyen terme**  
+3. Intégration data et automatisation
+   - Connexion automatique aux factures énergétiques et systèmes GTB.
+   - Détection d’anomalies de consommation et alertes pour les sites en dérive.
 
+**Long terme**  
+4. Pilotage multi‑campus & ouverture produit
+   - Suivi de trajectoires carbone alignées **SBTi**.
+   - Intégration avec les outils RSE et BI (Power BI, dashboards ESG).
+   - API ouverte pour alimenter finance, achats, RH.
+
+5. Industrialisation & déploiement
+   - Stack standard (Spring Boot, Angular, React Native, PostgreSQL, Docker) pour un déploiement multi‑campus.
+   - Squad cible : 1 PO, 2–3 dev fullstack, 1 data/ACV, 1 ops.
+   - Pilote en 3–4 mois en réutilisant SSO, CI/CD, monitoring existants.
+
+Conclusion : « En deux jours de hackathon, nous avons développé un prototype complet permettant de mesurer, comparer et simuler l’empreinte carbone de sites physiques. Ce socle technique — backend, web et mobile — constitue une base solide pour un déploiement réel dans les grandes organisations. La prochaine étape est d’industrialiser les connecteurs de données et d’enrichir la méthodologie carbone pour piloter la transition bas carbone des campus d’entreprise. »
