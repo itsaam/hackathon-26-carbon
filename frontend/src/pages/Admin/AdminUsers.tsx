@@ -3,6 +3,7 @@ import { apiFetch } from "@/lib/api";
 import PageHeader from "@/components/ui/PageHeader";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { Site } from "@/hooks/useSites";
 
 interface User {
   id?: number;
@@ -17,13 +18,30 @@ export default function AdminUsers() {
   const navigate = useNavigate();
   const [editing, setEditing] = useState<User | null>(null);
   const [password, setPassword] = useState<string>("");
+  const [selectedSiteIds, setSelectedSiteIds] = useState<number[]>([]);
 
   const usersQuery = useQuery({
     queryKey: ["admin", "users"],
     queryFn: () => apiFetch<User[]>("/api/users"),
   });
 
+  const sitesQuery = useQuery({
+    queryKey: ["admin", "all-sites"],
+    queryFn: () => apiFetch<Site[]>("/api/sites"),
+  });
+
+  const siteAccessQuery = useQuery({
+    queryKey: ["admin", "users", editing?.id, "site-access"],
+    enabled: !!editing?.id,
+    queryFn: async () => {
+      const ids = await apiFetch<number[]>(`/api/admin/users/${editing!.id}/site-access`);
+      setSelectedSiteIds(ids);
+      return ids;
+    },
+  });
+
   const users = usersQuery.data ?? [];
+  const sites = sitesQuery.data ?? [];
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -38,10 +56,17 @@ export default function AdminUsers() {
       }
 
       if (editing.id) {
-        return apiFetch<User>(`/api/users/${editing.id}`, {
+        const updated = await apiFetch<User>(`/api/users/${editing.id}`, {
           method: "PUT",
           body: JSON.stringify(payload),
         });
+
+        await apiFetch<void>(`/api/admin/users/${editing.id}/site-access`, {
+          method: "PUT",
+          body: JSON.stringify({ siteIds: selectedSiteIds }),
+        });
+
+        return updated;
       }
       return apiFetch<User>("/api/users", {
         method: "POST",
@@ -50,8 +75,11 @@ export default function AdminUsers() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin", "users"] });
+      qc.invalidateQueries({ queryKey: ["admin", "all-sites"] });
+      qc.invalidateQueries({ queryKey: ["sites"] });
       setEditing(null);
       setPassword("");
+      setSelectedSiteIds([]);
     },
   });
 
@@ -77,6 +105,7 @@ export default function AdminUsers() {
             onClick={() => {
               setEditing({ fullName: "", email: "", role: "USER" });
               setPassword("");
+              setSelectedSiteIds([]);
             }}
             className="inline-flex items-center gap-2 border border-border text-foreground font-medium px-4 py-2 rounded-lg hover:bg-muted transition-colors text-sm"
           >
@@ -176,11 +205,54 @@ export default function AdminUsers() {
                 onChange={setPassword}
               />
             </div>
+
+            {editing.id && (
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold">Accès aux sites</h3>
+                  <span className="text-xs text-muted-foreground">
+                    {selectedSiteIds.length} / {sites.length}
+                  </span>
+                </div>
+                <div className="max-h-56 overflow-auto rounded-lg border border-border bg-background">
+                  {sites.map((s) => {
+                    const checked = selectedSiteIds.includes(s.id);
+                    return (
+                      <label
+                        key={s.id}
+                        className="flex items-center justify-between gap-3 px-3 py-2 text-xs border-b border-border last:border-0 hover:bg-muted/30 cursor-pointer"
+                      >
+                        <span className="text-foreground">{s.name}</span>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            setSelectedSiteIds((prev) => {
+                              if (e.target.checked) return Array.from(new Set([...prev, s.id]));
+                              return prev.filter((id) => id !== s.id);
+                            });
+                          }}
+                        />
+                      </label>
+                    );
+                  })}
+                  {sites.length === 0 && (
+                    <div className="px-3 py-3 text-xs text-muted-foreground">
+                      Aucun site trouvé.
+                    </div>
+                  )}
+                </div>
+                {siteAccessQuery.isFetching && (
+                  <div className="text-xs text-muted-foreground mt-2">Chargement des droits…</div>
+                )}
+              </div>
+            )}
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => {
                   setEditing(null);
                   setPassword("");
+                  setSelectedSiteIds([]);
                 }}
                 className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted transition-colors"
               >

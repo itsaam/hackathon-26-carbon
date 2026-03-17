@@ -72,6 +72,7 @@ public class SiteService {
         User currentUser = getCurrentUserIfAny();
         if (currentUser != null) {
             site.setUser(currentUser);
+            site.getAllowedUsers().add(currentUser);
         }
         
         site = siteRepository.save(site);
@@ -83,7 +84,11 @@ public class SiteService {
         User currentUser = getCurrentUserIfAny();
         List<Site> sites;
         if (currentUser != null) {
-            sites = siteRepository.findByUserId(currentUser.getId());
+            if ("ADMIN".equalsIgnoreCase(currentUser.getRole())) {
+                sites = siteRepository.findAll();
+            } else {
+                sites = siteRepository.findAccessibleByUserId(currentUser.getId());
+            }
         } else {
             sites = siteRepository.findAll();
         }
@@ -233,7 +238,19 @@ public class SiteService {
         if (current == null) {
             return;
         }
-        if (site.getUser() != null && !site.getUser().getId().equals(current.getId()) && !"ADMIN".equalsIgnoreCase(current.getRole())) {
+        if ("ADMIN".equalsIgnoreCase(current.getRole())) {
+            return;
+        }
+
+        boolean hasAccess = false;
+        if (site.getUser() != null && site.getUser().getId().equals(current.getId())) {
+            hasAccess = true;
+        }
+        if (!hasAccess && site.getAllowedUsers() != null) {
+            hasAccess = site.getAllowedUsers().stream().anyMatch(u -> u.getId() != null && u.getId().equals(current.getId()));
+        }
+
+        if (!hasAccess) {
             throw new EntityNotFoundException("Site non trouvé avec l'ID : " + site.getId());
         }
     }

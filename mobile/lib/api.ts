@@ -2,11 +2,10 @@ import { router } from "expo-router";
 import { clearToken, getToken } from "./auth";
 
 function getApiBaseUrl(): string {
+  const defaultProd = "https://api.carbontrack.nexsecure.fr";
   const raw = process.env.EXPO_PUBLIC_API_URL;
-  if (!raw) {
-    throw new Error("EXPO_PUBLIC_API_URL manquant");
-  }
-  return raw.replace(/\/+$/, "");
+  const base = (raw && raw.trim()) ? raw.trim() : defaultProd;
+  return base.replace(/\/+$/, "");
 }
 
 function isUnauthorized(status: number) {
@@ -42,9 +41,6 @@ export function getUserErrorMessage(err: unknown): string {
     if (err.status >= 500) return "Erreur serveur. Réessaie dans un instant.";
     return msg || "Erreur lors de l'appel API";
   }
-  if (err instanceof Error && err.message.includes("EXPO_PUBLIC_API_URL")) {
-    return "Configuration manquante: EXPO_PUBLIC_API_URL (voir mobile/README.md).";
-  }
   // Erreurs réseau typiques de fetch en React Native (IP injoignable, backend down, pare-feu, etc.)
   if (err instanceof TypeError) {
     const msg = (err.message || "").toLowerCase();
@@ -52,7 +48,7 @@ export function getUserErrorMessage(err: unknown): string {
       // Si possible, on remonte l'URL (injectée dans apiFetch) pour rendre le debug immédiat.
       const match = (err.message || "").match(/\(url:\s*([^)]+)\)/i);
       const urlHint = match?.[1] ? ` (URL: ${match[1]})` : "";
-      return `Erreur réseau: impossible de joindre l’API. Vérifie EXPO_PUBLIC_API_URL, le Wi‑Fi (même réseau) et le pare-feu Windows.${urlHint}`;
+      return `Erreur réseau: impossible de joindre l’API. Vérifie le réseau, et au besoin définis EXPO_PUBLIC_API_URL dans mobile/.env pour pointer vers ton backend (IP locale).${urlHint}`;
     }
   }
   if (err instanceof Error) {

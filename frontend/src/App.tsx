@@ -29,6 +29,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  const role = (user as any)?.role;
+  const isAdmin = role === "ADMIN" || role === "ROLE_ADMIN";
+  if (!isAdmin) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
+
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
@@ -50,11 +59,11 @@ const AppRoutes = () => (
       <Route path="history" element={<History />} />
       <Route path="sites/:id/history" element={<History />} />
       <Route path="map" element={<MapPage />} />
-      <Route path="admin" element={<AdminHome />} />
-      <Route path="admin/users" element={<AdminUsers />} />
-      <Route path="admin/organization" element={<AdminOrganization />} />
-      <Route path="admin/materials" element={<AdminMaterials />} />
-      <Route path="admin/energy-factors" element={<AdminEnergyFactors />} />
+      <Route path="admin" element={<AdminRoute><AdminHome /></AdminRoute>} />
+      <Route path="admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+      <Route path="admin/organization" element={<AdminRoute><AdminOrganization /></AdminRoute>} />
+      <Route path="admin/materials" element={<AdminRoute><AdminMaterials /></AdminRoute>} />
+      <Route path="admin/energy-factors" element={<AdminRoute><AdminEnergyFactors /></AdminRoute>} />
     </Route>
     <Route path="*" element={<NotFound />} />
   </Routes>

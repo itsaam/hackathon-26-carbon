@@ -77,7 +77,7 @@ export default function Sidebar() {
           );
         })}
 
-        {user && (
+        {isAdmin && (
           <NavLink
             to="/admin"
             className={({ isActive }) =>

@@ -9,6 +9,8 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "sites")
@@ -26,6 +28,19 @@ public class Site {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    /**
+     * Utilisateurs autorisés à accéder à ce site (hors admins, qui ont accès global).
+     * Utilisé pour filtrer les listes et protéger l'accès aux détails.
+     */
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "site_access",
+            joinColumns = @JoinColumn(name = "site_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    @Builder.Default
+    private Set<User> allowedUsers = new HashSet<>();
 
     @Column(nullable = false)
     private String name;
