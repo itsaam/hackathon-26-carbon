@@ -82,40 +82,9 @@ Web (React)   ──┘
 
 ### 3.2 Schéma infra (logique)
 
-> Ces schémas utilisent **Mermaid** (rendu natif GitHub/Cursor si activé).
-
 Schéma d’architecture (image du repo) :
 
 ![Schéma d’architecture (Web + Mobile + API)](architecture.png)
-
-```mermaid
-flowchart LR
-  subgraph Utilisateurs
-    U1[Utilisateur Web]
-    U2[Utilisateur Mobile]
-  end
-
-  subgraph Clients
-    WEB[Frontend Web<br/>React + Vite]
-    MOB[Mobile<br/>Expo / React Native]
-  end
-
-  subgraph Plateforme
-    RP[Reverse proxy (prod)<br/>Nginx / Plesk]
-    API[Backend API<br/>Spring Boot + JWT]
-    DB[(PostgreSQL)]
-    GEO[Nominatim<br/>(OpenStreetMap)]
-  end
-
-  U1 --> WEB
-  U2 --> MOB
-
-  WEB -->|HTTP(S) /api/*| RP
-  MOB -->|HTTP(S) API| RP
-  RP --> API
-  API --> DB
-  API -->|HTTP| GEO
-```
 
 ### 3.2 Stack technique
 
