@@ -6,6 +6,7 @@ import com.hackathon.carbon.entity.Site;
 import com.hackathon.carbon.repository.CarbonResultRepository;
 import com.hackathon.carbon.repository.SiteRepository;
 import com.hackathon.carbon.service.CarbonCalculationService;
+import com.hackathon.carbon.service.PushNotificationService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ public class CarbonResultController {
     private final CarbonResultRepository carbonResultRepository;
     private final SiteRepository siteRepository;
     private final CarbonCalculationService carbonCalculationService;
+    private final PushNotificationService pushNotificationService;
 
     @GetMapping("/results")
     public ResponseEntity<List<CarbonResultDTO>> getAllResults() {
@@ -132,6 +134,10 @@ public class CarbonResultController {
                 .orElseThrow(() -> new EntityNotFoundException("Site non trouvé avec l'ID : " + siteId));
 
         var result = carbonCalculationService.calculateAndSaveForSite(site, year);
+
+        siteRepository.findByIdWithUserAndAllowedUsers(siteId).stream().findFirst().ifPresent(siteWithUsers ->
+                pushNotificationService.notifyIfThresholdExceeded(siteWithUsers, result));
+
         return ResponseEntity.ok(toDTO(result));
     }
 

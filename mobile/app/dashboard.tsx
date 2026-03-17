@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from "react-native";
 import { router } from "expo-router";
 import { apiJson, getUserErrorMessage } from "../lib/api";
 import { clearToken } from "../lib/auth";
+import { registerPushTokenIfPossible } from "../lib/pushNotifications";
 import { Screen } from "../ui/components/Screen";
 import { AppText } from "../ui/components/AppText";
 import { Card } from "../ui/components/Card";
@@ -44,6 +45,10 @@ export default function DashboardScreen() {
     return () => {
       alive = false;
     };
+  }, []);
+
+  useEffect(() => {
+    registerPushTokenIfPossible().catch(() => {});
   }, []);
 
   const stats = useMemo(() => {

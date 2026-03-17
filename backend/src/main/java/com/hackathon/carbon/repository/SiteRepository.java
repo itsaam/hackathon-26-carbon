@@ -14,4 +14,7 @@ public interface SiteRepository extends JpaRepository<Site, Long> {
 
     @Query("select distinct s from Site s join s.allowedUsers u where u.id = :userId")
     List<Site> findAccessibleByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT DISTINCT s FROM Site s LEFT JOIN FETCH s.user LEFT JOIN FETCH s.allowedUsers WHERE s.id = :id")
+    List<Site> findByIdWithUserAndAllowedUsers(@Param("id") Long id);
 }
