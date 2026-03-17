@@ -21,6 +21,7 @@ import AdminUsers from "@/pages/Admin/AdminUsers";
 import AdminOrganization from "@/pages/Admin/AdminOrganization";
 import AdminSites from "@/pages/Admin/AdminSites";
 import AdminSiteAccess from "@/pages/Admin/AdminSiteAccess";
+import Documentation from "@/pages/Documentation/Documentation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const AppRoutes = () => (
       <Route path="admin/sites/:id/access" element={<AdminRoute><AdminSiteAccess /></AdminRoute>} />
       <Route path="admin/materials" element={<AdminRoute><AdminMaterials /></AdminRoute>} />
       <Route path="admin/energy-factors" element={<AdminRoute><AdminEnergyFactors /></AdminRoute>} />
+      <Route path="documentation" element={<Documentation />} />
     </Route>
     <Route path="*" element={<NotFound />} />
   </Routes>

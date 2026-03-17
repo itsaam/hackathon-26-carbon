@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { LayoutDashboard, Building2, GitCompareArrows, History, LogOut, ChevronLeft, ChevronRight, Menu, X, Settings2, Map, Users } from "lucide-react";
+import { LayoutDashboard, Building2, GitCompareArrows, History, LogOut, ChevronLeft, ChevronRight, Menu, X, Map, Users, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,7 @@ const navItems = [
   { to: "/map", label: "Carte", icon: Map },
   { to: "/compare", label: "Comparer", icon: GitCompareArrows },
   { to: "/history", label: "Historique", icon: History },
+  { to: "/documentation", label: "Documentation", icon: FileText },
 ];
 
 export default function Sidebar() {

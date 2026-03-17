@@ -5,7 +5,6 @@
 **Dates :** 16–17 mars 2026  
 **Dépôt :** `hackathon-26-carbon/`
 https://carbontrack.nexsecure.fr/dashboard
-https://drive.google.com/drive/folders/1IiZm5FaWhCHi1K5C-5cDTfmyK42NFGUR?usp=drive_link
 
 ---
 
