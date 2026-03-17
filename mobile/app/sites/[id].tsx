@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { View, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, RefreshControl } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { ApiError, apiFetch, apiJson, getUserErrorMessage } from "../../lib/api";
-import { clearToken } from "../../lib/auth";
 import { Screen } from "../../ui/components/Screen";
 import { AppText } from "../../ui/components/AppText";
 import { Card } from "../../ui/components/Card";
@@ -97,10 +96,7 @@ export default function SiteDetailScreen() {
     }
   };
 
-  const handleLogout = async () => {
-    await clearToken();
-    router.replace("/login");
-  };
+  // Déconnexion disponible depuis le Dashboard uniquement.
 
   const handleRecalculate = async () => {
     if (!id) return;
@@ -166,8 +162,8 @@ export default function SiteDetailScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={t.colors.primary} />}
       >
         <View style={styles.topRow}>
-          <Button title="← Retour" variant="ghost" size="sm" onPress={() => router.back()} />
-          <Button title="Déconnexion" variant="outline" size="sm" onPress={handleLogout} />
+          <View />
+          <View />
         </View>
 
         <AppText variant="title" style={{ marginTop: 6 }}>
@@ -235,29 +231,42 @@ export default function SiteDetailScreen() {
           )}
         </Card>
 
-        {result && scenarioResult && (
+        {scenarioResult && (
           <Card style={{ marginTop: theme.spacing.md }}>
             <AppText variant="kpi">Scénario rapide</AppText>
             <AppText variant="muted" style={{ marginTop: 6 }}>
               -10 % énergie · +20 % renouvelable
             </AppText>
-            <AppText variant="muted" style={{ marginTop: 10 }}>
-              CO₂ total actuel : {((result.totalCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
-            </AppText>
-            <AppText variant="muted" style={{ marginTop: 2 }}>
-              CO₂ total scénario : {((scenarioResult.totalCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
-            </AppText>
-            {result.totalCo2Kg != null && scenarioResult.totalCo2Kg != null && (
-              <AppText variant="caption" style={{ marginTop: 8 }}>
-                {(() => {
-                  const deltaT = (scenarioResult.totalCo2Kg - result.totalCo2Kg) / 1000;
-                  const baseT = (result.totalCo2Kg ?? 0) / 1000;
-                  const pct = baseT > 0 ? (deltaT / baseT) * 100 : 0;
-                  if (deltaT < 0) return `Gain estimé : -${Math.abs(deltaT).toFixed(2)} tCO₂e (${Math.abs(pct).toFixed(1)} %).`;
-                  if (deltaT > 0) return `Surcoût carbone estimé : +${deltaT.toFixed(2)} tCO₂e (${pct.toFixed(1)} %).`;
-                  return "Ce scénario ne change pas significativement les émissions totales.";
-                })()}
-              </AppText>
+            {result ? (
+              <>
+                <AppText variant="muted" style={{ marginTop: 10 }}>
+                  CO₂ total actuel : {((result.totalCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
+                </AppText>
+                <AppText variant="muted" style={{ marginTop: 2 }}>
+                  CO₂ total scénario : {((scenarioResult.totalCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
+                </AppText>
+                {result.totalCo2Kg != null && scenarioResult.totalCo2Kg != null && (
+                  <AppText variant="caption" style={{ marginTop: 8 }}>
+                    {(() => {
+                      const deltaT = (scenarioResult.totalCo2Kg - result.totalCo2Kg) / 1000;
+                      const baseT = (result.totalCo2Kg ?? 0) / 1000;
+                      const pct = baseT > 0 ? (deltaT / baseT) * 100 : 0;
+                      if (deltaT < 0) return `Gain estimé : -${Math.abs(deltaT).toFixed(2)} tCO₂e (${Math.abs(pct).toFixed(1)} %).`;
+                      if (deltaT > 0) return `Surcoût carbone estimé : +${deltaT.toFixed(2)} tCO₂e (${pct.toFixed(1)} %).`;
+                      return "Ce scénario ne change pas significativement les émissions totales.";
+                    })()}
+                  </AppText>
+                )}
+              </>
+            ) : (
+              <>
+                <AppText variant="muted" style={{ marginTop: 10 }}>
+                  CO₂ total scénario : {((scenarioResult.totalCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
+                </AppText>
+                <AppText variant="caption" style={{ marginTop: 8 }}>
+                  Lance un recalcul pour comparer à la situation actuelle.
+                </AppText>
+              </>
             )}
           </Card>
         )}

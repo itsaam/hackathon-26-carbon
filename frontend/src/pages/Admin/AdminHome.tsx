@@ -1,5 +1,5 @@
 import PageHeader from "@/components/ui/PageHeader";
-import { Users, Boxes, Fuel, UserRoundCog } from "lucide-react";
+import { Users, Boxes, Fuel, UserRoundCog, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function AdminHome() {
@@ -49,6 +49,23 @@ export default function AdminHome() {
           <div className="text-xs text-muted-foreground">
             Associer des employés à un manager (nom, prénom, email).
           </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate("/admin/sites")}
+          className="group bg-card border border-border rounded-xl p-4 text-left hover:border-primary/60 hover:shadow-sm transition-all"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600">
+              <Building2 className="h-5 w-5" />
+            </span>
+            <div>
+              <div className="font-semibold text-card-foreground">Sites</div>
+              <div className="text-xs text-muted-foreground">Gérer les sites et les accès.</div>
+            </div>
+          </div>
+          <div className="text-xs text-muted-foreground">Lister, supprimer, et gérer les droits par site.</div>
         </button>
 
         <button

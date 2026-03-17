@@ -9,8 +9,7 @@ import { Card } from "../ui/components/Card";
 import { Button } from "../ui/components/Button";
 import { Banner } from "../ui/components/Banner";
 import { theme } from "../ui/theme";
-import { useTheme } from "../ui/ThemeProvider";
-import type { ThemePreference } from "../ui/themePreference";
+import { useAppTheme } from "../ui/useTheme";
 
 interface Site {
   id: number;
@@ -24,7 +23,7 @@ export default function DashboardScreen() {
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const t = useTheme();
+  const t = useAppTheme();
 
   useEffect(() => {
     let alive = true;
@@ -62,10 +61,8 @@ export default function DashboardScreen() {
     router.replace("/login");
   };
 
-  const setPref = (pref: ThemePreference) => t.setPreference(pref);
-
   return (
-    <Screen>
+    <Screen showBack={false}>
       <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <View style={{ flex: 1 }}>
@@ -76,18 +73,6 @@ export default function DashboardScreen() {
           </View>
           <Button title="Déconnexion" variant="outline" size="sm" onPress={logout} />
         </View>
-
-        <Card style={{ marginTop: theme.spacing.md }}>
-          <AppText variant="kpi">Apparence</AppText>
-          <AppText variant="muted" style={{ marginTop: 6 }}>
-            Choisissez un mode (ou suivez le thème du téléphone).
-          </AppText>
-          <View style={{ flexDirection: "row", gap: 10, marginTop: theme.spacing.md, flexWrap: "wrap" }}>
-            <Button title="Système" variant={t.preference === "system" ? "primary" : "outline"} size="sm" onPress={() => setPref("system")} />
-            <Button title="Clair" variant={t.preference === "light" ? "primary" : "outline"} size="sm" onPress={() => setPref("light")} />
-            <Button title="Sombre" variant={t.preference === "dark" ? "primary" : "outline"} size="sm" onPress={() => setPref("dark")} />
-          </View>
-        </Card>
 
         {loading && <ActivityIndicator color={t.colors.primary} style={{ marginTop: theme.spacing.md }} />}
         {error && (

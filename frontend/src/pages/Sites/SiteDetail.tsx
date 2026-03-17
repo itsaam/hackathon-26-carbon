@@ -564,20 +564,52 @@ export default function SiteDetail() {
               </div>
             </div>
 
-            {result && scenarioResult && (
+            {scenarioResult && (
               <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs items-start">
                 <div className="bg-muted/40 rounded-lg p-3 border border-border/60">
                   <h3 className="font-semibold text-card-foreground mb-1.5">Situation actuelle</h3>
-                  <p className="text-muted-foreground">CO₂ total : <span className="font-semibold text-card-foreground">{(((result.totalCo2Kg ?? 0) / 1000)).toLocaleString("fr-FR")} tCO₂e</span></p>
-                  <p className="text-muted-foreground">CO₂ / m² : <span className="font-semibold text-card-foreground">{(result.co2PerM2 ?? 0).toFixed(3)} kg/m²</span></p>
-                  <p className="text-muted-foreground">CO₂ / employé : <span className="font-semibold text-card-foreground">{(result.co2PerEmployee ?? 0).toFixed(2)} kg/pers.</span></p>
+                  {result ? (
+                    <>
+                      <p className="text-muted-foreground">
+                        CO₂ total :{" "}
+                        <span className="font-semibold text-card-foreground">
+                          {(((result.totalCo2Kg ?? 0) / 1000)).toLocaleString("fr-FR")} tCO₂e
+                        </span>
+                      </p>
+                      <p className="text-muted-foreground">
+                        CO₂ / m² :{" "}
+                        <span className="font-semibold text-card-foreground">{(result.co2PerM2 ?? 0).toFixed(3)} kg/m²</span>
+                      </p>
+                      <p className="text-muted-foreground">
+                        CO₂ / employé :{" "}
+                        <span className="font-semibold text-card-foreground">
+                          {(result.co2PerEmployee ?? 0).toFixed(2)} kg/pers.
+                        </span>
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground">
+                      Lancez un <span className="font-semibold text-card-foreground">recalcul</span> pour comparer le scénario à la situation actuelle.
+                    </p>
+                  )}
                 </div>
                 <div className="bg-muted/40 rounded-lg p-3 border border-border/60">
                   <h3 className="font-semibold text-card-foreground mb-1.5">Scénario simulé</h3>
-                  <p className="text-muted-foreground">CO₂ total : <span className="font-semibold text-card-foreground">{(((scenarioResult.totalCo2Kg ?? 0) / 1000)).toLocaleString("fr-FR")} tCO₂e</span></p>
-                  <p className="text-muted-foreground">CO₂ / m² : <span className="font-semibold text-card-foreground">{(scenarioResult.co2PerM2 ?? 0).toFixed(3)} kg/m²</span></p>
-                  <p className="text-muted-foreground">CO₂ / employé : <span className="font-semibold text-card-foreground">{(scenarioResult.co2PerEmployee ?? 0).toFixed(2)} kg/pers.</span></p>
-                  {result.totalCo2Kg != null && scenarioResult.totalCo2Kg != null && (
+                  <p className="text-muted-foreground">
+                    CO₂ total :{" "}
+                    <span className="font-semibold text-card-foreground">
+                      {(((scenarioResult.totalCo2Kg ?? 0) / 1000)).toLocaleString("fr-FR")} tCO₂e
+                    </span>
+                  </p>
+                  <p className="text-muted-foreground">
+                    CO₂ / m² :{" "}
+                    <span className="font-semibold text-card-foreground">{(scenarioResult.co2PerM2 ?? 0).toFixed(3)} kg/m²</span>
+                  </p>
+                  <p className="text-muted-foreground">
+                    CO₂ / employé :{" "}
+                    <span className="font-semibold text-card-foreground">{(scenarioResult.co2PerEmployee ?? 0).toFixed(2)} kg/pers.</span>
+                  </p>
+                  {result?.totalCo2Kg != null && scenarioResult.totalCo2Kg != null && (
                     <>
                       <p className="text-muted-foreground mt-1">
                         Delta :{" "}

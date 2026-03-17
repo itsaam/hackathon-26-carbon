@@ -72,7 +72,6 @@ export default function QuickMaterialsScreen() {
   return (
     <Screen>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
-        <Button title="← Retour" variant="ghost" size="sm" onPress={() => router.back()} />
         <AppText variant="title" style={{ marginTop: 6 }}>
           Saisie matériaux
         </AppText>

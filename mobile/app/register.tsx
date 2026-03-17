@@ -100,7 +100,7 @@ export default function RegisterScreen() {
           </View>
 
           <View style={{ marginTop: theme.spacing.lg, alignItems: "center" }}>
-            <Button title="Déjà un compte ? Se connecter" variant="ghost" onPress={() => router.back()} />
+            <Button title="Déjà un compte ? Se connecter" variant="ghost" onPress={() => router.replace("/login")} />
           </View>
         </View>
       </ScrollView>

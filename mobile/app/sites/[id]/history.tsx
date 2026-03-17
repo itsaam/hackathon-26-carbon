@@ -71,7 +71,7 @@ export default function SiteHistoryScreen() {
     <Screen>
       <View style={styles.container}>
         <View style={styles.topRow}>
-          <Button title="← Retour" variant="ghost" size="sm" onPress={() => router.back()} />
+          <View />
         </View>
         <AppText variant="title" style={{ marginTop: 6 }}>
           Historique

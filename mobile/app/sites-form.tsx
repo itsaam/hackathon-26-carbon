@@ -143,7 +143,6 @@ export default function SiteFormScreen() {
   return (
     <Screen>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
-        <Button title="← Retour" variant="ghost" size="sm" onPress={() => router.back()} />
         <AppText variant="title" style={{ marginTop: 6 }}>
           {isEdit ? "Modifier le site" : "Nouveau site"}
         </AppText>
@@ -161,61 +160,46 @@ export default function SiteFormScreen() {
           <AppText variant="caption" style={styles.sectionTitle}>
             Informations générales
           </AppText>
-          <Input placeholder="Nom du site" value={form.name} onChangeText={(v) => update("name", v)} />
+          <Field label="Nom du site">
+            <Input placeholder="Ex: Tour Europlaza — La Défense" value={form.name} onChangeText={(v) => update("name", v)} />
+          </Field>
+          <Field label="Surface (m²)">
           <Input
-            placeholder="Surface (m²)"
             keyboardType="numeric"
             value={form.surface}
             onChangeText={(v) => update("surface", v)}
           />
-          <Input
-            placeholder="Nombre d'employés"
-            keyboardType="numeric"
-            value={form.employees}
-            onChangeText={(v) => update("employees", v)}
-          />
-          <Input
-            placeholder="Postes de travail (optionnel)"
-            keyboardType="numeric"
-            value={form.workstations}
-            onChangeText={(v) => update("workstations", v)}
-          />
+          </Field>
+          <Field label="Nombre d'employés">
+            <Input keyboardType="numeric" value={form.employees} onChangeText={(v) => update("employees", v)} />
+          </Field>
+          <Field label="Postes de travail (optionnel)">
+            <Input keyboardType="numeric" value={form.workstations} onChangeText={(v) => update("workstations", v)} />
+          </Field>
         </View>
 
         <View style={{ marginTop: theme.spacing.lg, gap: 10 }}>
           <AppText variant="caption" style={styles.sectionTitle}>
             Parkings
           </AppText>
-          <Input
-            placeholder="Sous-dalle"
-            keyboardType="numeric"
-            value={form.parkingBasement}
-            onChangeText={(v) => update("parkingBasement", v)}
-          />
-          <Input
-            placeholder="Sous-sol"
-            keyboardType="numeric"
-            value={form.parkingUnderground}
-            onChangeText={(v) => update("parkingUnderground", v)}
-          />
-          <Input
-            placeholder="Aérien"
-            keyboardType="numeric"
-            value={form.parkingOutdoor}
-            onChangeText={(v) => update("parkingOutdoor", v)}
-          />
+          <Field label="Sous-dalle">
+            <Input keyboardType="numeric" value={form.parkingBasement} onChangeText={(v) => update("parkingBasement", v)} />
+          </Field>
+          <Field label="Sous-sol">
+            <Input keyboardType="numeric" value={form.parkingUnderground} onChangeText={(v) => update("parkingUnderground", v)} />
+          </Field>
+          <Field label="Aérien">
+            <Input keyboardType="numeric" value={form.parkingOutdoor} onChangeText={(v) => update("parkingOutdoor", v)} />
+          </Field>
         </View>
 
         <View style={{ marginTop: theme.spacing.lg, gap: 10 }}>
           <AppText variant="caption" style={styles.sectionTitle}>
             Énergie
           </AppText>
-          <Input
-            placeholder="Consommation totale (MWh/an)"
-            keyboardType="numeric"
-            value={form.energyConsumption}
-            onChangeText={(v) => update("energyConsumption", v)}
-          />
+          <Field label="Consommation totale (MWh/an)">
+            <Input keyboardType="numeric" value={form.energyConsumption} onChangeText={(v) => update("energyConsumption", v)} />
+          </Field>
           <AppText variant="caption" style={{ marginTop: 4, color: t.colors.mutedForeground }}>
             Soit {form.energyConsumption ? (Number(form.energyConsumption) * 1000).toLocaleString("fr-FR") : "—"} kWh/an.
           </AppText>
@@ -225,21 +209,15 @@ export default function SiteFormScreen() {
           <AppText variant="caption" style={styles.sectionTitle}>
             Typologie & activité
           </AppText>
-          <Input
-            placeholder="Type de bâtiment (ex: Bureaux)"
-            value={form.buildingType}
-            onChangeText={(v) => update("buildingType", v)}
-          />
-          <Input
-            placeholder="Usage principal (ex: Centre de services)"
-            value={form.usageType}
-            onChangeText={(v) => update("usageType", v)}
-          />
-          <Input
-            placeholder="Description de l'activité"
-            value={form.activityDescription}
-            onChangeText={(v) => update("activityDescription", v)}
-          />
+          <Field label="Type de bâtiment">
+            <Input placeholder="Ex: Bureaux" value={form.buildingType} onChangeText={(v) => update("buildingType", v)} />
+          </Field>
+          <Field label="Usage principal">
+            <Input placeholder="Ex: Centre de services" value={form.usageType} onChangeText={(v) => update("usageType", v)} />
+          </Field>
+          <Field label="Description de l'activité">
+            <Input placeholder="Ex: Services numériques, centre de support..." value={form.activityDescription} onChangeText={(v) => update("activityDescription", v)} />
+          </Field>
         </View>
 
         <View style={{ marginTop: theme.spacing.lg }}>
@@ -247,6 +225,18 @@ export default function SiteFormScreen() {
         </View>
       </ScrollView>
     </Screen>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const t = useAppTheme();
+  return (
+    <View style={{ gap: 6 }}>
+      <AppText variant="caption" style={{ color: t.colors.mutedForeground }}>
+        {label}
+      </AppText>
+      {children}
+    </View>
   );
 }
 

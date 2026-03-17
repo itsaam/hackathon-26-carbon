@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { View, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
 import { apiJson, getUserErrorMessage } from "../lib/api";
-import { clearToken } from "../lib/auth";
 import { Screen } from "../ui/components/Screen";
 import { AppText } from "../ui/components/AppText";
 import { Card } from "../ui/components/Card";
@@ -58,10 +57,7 @@ export default function SitesScreen() {
     }
   };
 
-  const handleLogout = async () => {
-    await clearToken();
-    router.replace("/login");
-  };
+  // Déconnexion disponible depuis le Dashboard uniquement.
 
   return (
     <Screen>
@@ -71,7 +67,6 @@ export default function SitesScreen() {
             <AppText variant="title">Vos sites</AppText>
             <AppText variant="muted">Suivi rapide des indicateurs CO₂.</AppText>
           </View>
-          <Button title="Déconnexion" variant="outline" size="sm" onPress={handleLogout} />
         </View>
 
         {loading && <ActivityIndicator color={t.colors.primary} style={{ marginTop: 16 }} />}

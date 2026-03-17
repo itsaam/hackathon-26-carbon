@@ -8,8 +8,8 @@ import { useAppTheme } from "../ui/useTheme";
 function RootLayoutInner() {
   const t = useAppTheme();
   return (
-    <Screen>
-      <StatusBar style={t.scheme === "dark" ? "light" : "dark"} />
+    <Screen showBack={false}>
+      <StatusBar style="dark" />
       <Slot />
     </Screen>
   );
