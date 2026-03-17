@@ -116,6 +116,8 @@ export default function DashboardScreen() {
           <View style={{ marginTop: theme.spacing.md }}>
             <Button title="Voir tous les sites" onPress={() => router.push("/sites")} />
             <View style={{ height: 10 }} />
+            <Button title="Scanner un DPE (OCR)" variant="secondary" onPress={() => router.push("/scan")} />
+            <View style={{ height: 10 }} />
             <Button title="Comparer (web)" variant="outline" onPress={() => router.push("/sites")} />
             <AppText variant="caption" style={{ marginTop: 8 }}>
               La comparaison détaillée est disponible sur le web; sur mobile, vous pouvez consulter chaque site.

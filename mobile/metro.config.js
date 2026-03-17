@@ -27,6 +27,15 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     return { type: "sourceFile", filePath: rscRuntimePath };
   }
 
+  // Force-resolve `expo` from the app's node_modules to avoid Windows/OneDrive
+  // resolution edge cases when the origin file is inside `node_modules/@expo/*`.
+  if (moduleName === "expo") {
+    return {
+      type: "sourceFile",
+      filePath: path.join(__dirname, ".metro-vendor", "expo", "src", "Expo.ts"),
+    };
+  }
+
   return resolve(context, moduleName, platform);
 };
 

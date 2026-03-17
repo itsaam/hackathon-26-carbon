@@ -9,12 +9,25 @@
   - Consolider les données **construction + exploitation** par site.
   - Simuler simplement des scénarios (énergie, renouvelable, occupation).
   - Donner une vue cohérente web + mobile aux équipes immobilières et aux directions RSE.
+- Socle technique conforme au cahier des charges :
+  - **Backend** : Java **Spring Boot** exposant des APIs REST, architecture modulaire.
+  - **Base de données** : **PostgreSQL** pour le stockage et l’historisation des calculs.
+  - **Front web** : **React**, pour une interface moderne, réactive et facilement composable.
+  - **Mobile** : **React Native**, pour une application terrain réactive, avec une logique proche de React web.
+  - **Sécurité** : authentification **JWT**, exécutable en local ou via **Docker** pour un déploiement multi‑campus.
+  - **Facteurs d’émission** : connexion déjà opérationnelle à l’API **Base Carbone ADEME** pour récupérer les facteurs à jour.
+- Pourquoi ce choix technologique ?
+  - React côté web : bibliothèque très utilisée, idéale pour construire rapidement un dashboard riche en composants réutilisables, tout en restant proche de l’écosystème moderne (hooks, TypeScript).
+  - React Native côté mobile : on reste dans le même paradigme **React** (composants, hooks, TypeScript), ce qui permet de mutualiser les compétences et une partie de la logique (modèles de données, appels API) entre web et mobile.
+  - L’ensemble forme un socle **cohérent et industrialisable** pour un déploiement réel.
 
 Transition : « On va vous montrer comment, en 2 jours de hackathon, on a posé ce socle technique, côté backend, web et mobile. »
 
 ## 2–6 min — Démo web
 
 ### 2–3 min — Création et calcul d’un site
+
+Pré‑requis à l’écran : on est connecté sur l’application web **Angular**, qui consomme les APIs Spring Boot sécurisées par JWT.
 
 1. Connexion sur l’application web (login).  
 2. Navigation vers **Sites → Nouveau site**.
@@ -68,7 +81,7 @@ Message clé : « On passe d’une vue statique à un outil d’aide à la déci
 
 ### 6–7 min — Vue site & recalcul rapide
 
-1. Ouvrir l’app mobile (Expo) et se connecter.
+1. Ouvrir l’app mobile (Expo / React Native) et se connecter.
 2. Afficher la **liste des sites** : superficie, employés, dernier CO₂ si disponible.
 3. Ouvrir un site :
    - KPI synthétiques (CO₂ total, /m², /employé).
@@ -92,17 +105,22 @@ Message clé : « Le mobile permet de capturer des données directement depuis l
 ## 8–10 min — Roadmap & innovation
 
 1. **Renforcement méthodologique**
-   - Connexion à la **Base Carbone ADEME** en temps réel et multi‑pays.
+   - Connexion à la **Base Carbone ADEME** en temps réel et multi‑pays (déjà opérationnelle dans notre socle).
    - Gestion multi‑annuelles (2024+, scénarios d’évolution du mix énergétique).
 2. **ACV et data enrichies**
    - Détail par lots (structure, façade, CVC, second œuvre, mobilité pendulaire…).
    - Intégration SI : factures, GMAO, IoT, GTB.
+   - À venir : mise en place d’un module d’**OCR** pour scanner et analyser automatiquement les **DPE** et rapports techniques, afin de pré‑remplir les données d’entrée.
 3. **Pilotage multi‑campus**
    - Agrégation par pays, région, typologie.
    - Objectifs alignés SBTi, trajectoires et alertes.
 4. **Ouverture produit**
    - Intégration dans les outils existants Capgemini / clients (portails RSE, Power BI, etc.).
    - API ouverte pour exposer les indicateurs à d’autres briques (finance, achats, RH).
+5. **Industrialisation & déploiement**
+   - Cible technique : stack standard Capgemini (Spring Boot, Angular, React Native, PostgreSQL, Docker) pour un déploiement multi‑campus industrialisable.
+   - Organisation cible : une petite squad produit (1 PO, 2–3 dev fullstack, 1 data/ACV, 1 ops) capable de maintenir la plateforme et d’ajouter progressivement des connecteurs (factures, IoT, GTB).
+   - Coûts & time‑to‑market : en réutilisant au maximum les briques existantes Capgemini (SSO, monitoring, CI/CD), on vise un premier déploiement pilote en 3–4 mois, avec des coûts infra limités à un cluster mutualisé entre plusieurs sites.
 
 Conclusion : « En deux jours, on a posé un socle cohérent backend + web + mobile, déjà utilisable pour animer un atelier de décision sur un portefeuille de sites. La suite, c’est d’industrialiser les connecteurs de données et d’enrichir la méthodologie carbone. »
 

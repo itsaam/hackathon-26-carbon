@@ -156,6 +156,13 @@ public class SiteService {
         Site site = siteRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Site non trouvé avec l'ID : " + id));
         enforceOwnership(site);
+        // Supprime d'abord les entités dépendantes pour éviter les violations de clé étrangère
+        carbonResultRepository.deleteAll(
+                carbonResultRepository.findBySiteIdOrderByCalculatedAtDesc(id)
+        );
+        siteMaterialRepository.deleteAll(
+                siteMaterialRepository.findBySiteId(id)
+        );
         siteRepository.delete(site);
     }
 
