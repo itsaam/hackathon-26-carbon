@@ -84,6 +84,10 @@ Web (React)   ──┘
 
 > Ces schémas utilisent **Mermaid** (rendu natif GitHub/Cursor si activé).
 
+Schéma d’architecture (image du repo) :
+
+![Schéma d’architecture (Web + Mobile + API)](architecture.png)
+
 ```mermaid
 flowchart LR
   subgraph Utilisateurs
