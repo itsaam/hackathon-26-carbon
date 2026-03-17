@@ -3,7 +3,7 @@
     "name": "carbontrack-mobile",
     "slug": "carbontrack-mobile",
     "version": "0.1.0",
-    "sdkVersion": "51.0.0",
+    "sdkVersion": "54.0.0",
     "platforms": [
       "ios",
       "android"
@@ -12,7 +12,8 @@
       "bundleIdentifier": "com.anonymous.carbontrack-mobile"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-router"
     ]
   }
 }

@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Linking } from "react-native";
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, RefreshControl } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import { getToken } from "../../lib/auth";
+import { ApiError, apiFetch, apiJson, getUserErrorMessage } from "../../lib/api";
+import { clearToken } from "../../lib/auth";
+import { Screen } from "../../ui/components/Screen";
+import { AppText } from "../../ui/components/AppText";
+import { Card } from "../../ui/components/Card";
+import { Button } from "../../ui/components/Button";
+import { Banner } from "../../ui/components/Banner";
+import { useAppTheme } from "../../ui/useTheme";
+import { theme } from "../../ui/theme";
 
 interface Site {
   id: number;
@@ -26,70 +34,85 @@ interface CarbonResult {
   calculatedAt: string;
 }
 
+async function safeJson(res: Response): Promise<unknown> {
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 export default function SiteDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [site, setSite] = useState<Site | null>(null);
   const [result, setResult] = useState<CarbonResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [recalcLoading, setRecalcLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scenarioLoading, setScenarioLoading] = useState(false);
   const [scenarioResult, setScenarioResult] = useState<CarbonResult | null>(null);
+  const t = useAppTheme();
+
+  const load = async () => {
+    if (!id) return;
+    const [siteRes, latestRes] = await Promise.all([
+      apiFetch(`/api/sites/${id}`, { headers: { "Content-Type": "application/json" } }),
+      apiFetch(`/api/sites/${id}/results/latest`, { headers: { "Content-Type": "application/json" } }),
+    ]);
+
+    if (!siteRes.ok) {
+      throw new ApiError("Impossible de charger le site", siteRes.status, await safeJson(siteRes));
+    }
+
+    setSite(await siteRes.json());
+    if (latestRes.ok) setResult(await latestRes.json());
+    else setResult(null);
+  };
 
   useEffect(() => {
-    const load = async () => {
-      if (!id) return;
+    const run = async () => {
       try {
         setLoading(true);
         setError(null);
-        const token = await getToken();
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-
-        const [siteRes, latestRes] = await Promise.all([
-          fetch(process.env.EXPO_PUBLIC_API_URL + `/api/sites/${id}`, { headers }),
-          fetch(process.env.EXPO_PUBLIC_API_URL + `/api/sites/${id}/results/latest`, { headers }),
-        ]);
-
-        if (!siteRes.ok) {
-          setError("Impossible de charger le site");
-          return;
-        }
-        const siteJson = await siteRes.json();
-        setSite(siteJson);
-
-        if (latestRes.ok) {
-          const latestJson = await latestRes.json();
-          setResult(latestJson);
-        } else {
-          setResult(null);
-        }
+        await load();
       } catch {
-        setError("Erreur réseau");
+        setError("Impossible de charger le site");
       } finally {
         setLoading(false);
       }
     };
-    load();
+    run();
   }, [id]);
+
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      setError(null);
+      await load();
+    } catch (e) {
+      setError(getUserErrorMessage(e));
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await clearToken();
+    router.replace("/login");
+  };
 
   const handleRecalculate = async () => {
     if (!id) return;
     try {
       setRecalcLoading(true);
-      const token = await getToken();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
       const year = 2024;
-      const res = await fetch(process.env.EXPO_PUBLIC_API_URL + `/api/sites/${id}/results/calculate`, {
+      const json = await apiJson<CarbonResult>(`/api/sites/${id}/results/calculate`, {
         method: "POST",
-        headers,
         body: JSON.stringify({ year }),
       });
-      if (res.ok) {
-        const json = await res.json();
-        setResult(json);
-      }
+      setResult(json);
+      setScenarioResult(null);
     } finally {
       setRecalcLoading(false);
     }
@@ -99,233 +122,205 @@ export default function SiteDetailScreen() {
     if (!id) return;
     try {
       setScenarioLoading(true);
-      const token = await getToken();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
       const body = {
         energyDeltaPercent: -10,
         renewableDeltaPercent: 20,
       };
-      const res = await fetch(process.env.EXPO_PUBLIC_API_URL + `/api/sites/${id}/results/estimate`, {
+      const json = await apiJson<CarbonResult>(`/api/sites/${id}/results/estimate`, {
         method: "POST",
-        headers,
         body: JSON.stringify(body),
       });
-      if (res.ok) {
-        const json: CarbonResult = await res.json();
-        setScenarioResult(json);
-      }
+      setScenarioResult(json);
     } finally {
       setScenarioLoading(false);
     }
   };
 
-  const handleOpenReport = async () => {
-    if (!id) return;
-    try {
-      const token = await getToken();
-      const year = new Date().getFullYear();
-      const url = `${process.env.EXPO_PUBLIC_API_URL}/api/sites/${id}/report.pdf?year=${year}`;
-      // En démo, on ouvre simplement l'URL dans le navigateur.
-      await Linking.openURL(url);
-    } catch {
-      // silencieux en démo
-    }
-  };
-
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator color="#22d3ee" />
-      </View>
+      <Screen>
+        <View style={styles.center}>
+          <ActivityIndicator color={t.colors.primary} />
+        </View>
+      </Screen>
     );
   }
 
   if (!site) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.error}>Site introuvable.</Text>
-      </View>
+      <Screen>
+        <View style={styles.center}>
+          <Banner text="Site introuvable." variant="error" />
+        </View>
+      </Screen>
     );
   }
 
   const totalT = result?.totalCo2Kg != null ? result.totalCo2Kg / 1000 : null;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }}>
-      <TouchableOpacity onPress={() => router.back()}>
-        <Text style={styles.back}>← Retour</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.title}>{site.name}</Text>
-      <Text style={styles.subtitle}>
-        {site.surfaceM2.toLocaleString("fr-FR")} m² · {site.employeeCount} pers.
-      </Text>
-
-      {site.buildingType && (
-        <Text style={styles.subtitleSmall}>
-          {site.buildingType} {site.usageType ? `· ${site.usageType}` : ""}
-        </Text>
-      )}
-
-      <View style={styles.kpiRow}>
-        <Kpi label="CO₂ total" value={totalT != null ? `${totalT.toFixed(2)} t` : "—"} />
-        <Kpi label="CO₂ / m²" value={result?.co2PerM2 != null ? `${result.co2PerM2.toFixed(2)} kg` : "—"} />
-        <Kpi
-          label="CO₂ / employé"
-          value={result?.co2PerEmployee != null ? `${result.co2PerEmployee.toFixed(2)} kg` : "—"}
-        />
-      </View>
-
-      {result && (result.scope1Co2Kg != null || result.scope2Co2Kg != null || result.scope3Co2Kg != null) && (
-        <View style={styles.scopeRow}>
-          {result.scope1Co2Kg != null && (
-            <Text style={styles.scopeText}>Scope 1 : {(result.scope1Co2Kg / 1000).toFixed(2)} tCO₂e</Text>
-          )}
-          {result.scope2Co2Kg != null && (
-            <Text style={styles.scopeText}>Scope 2 : {(result.scope2Co2Kg / 1000).toFixed(2)} tCO₂e</Text>
-          )}
-          {result.scope3Co2Kg != null && (
-            <Text style={styles.scopeText}>Scope 3 : {(result.scope3Co2Kg / 1000).toFixed(2)} tCO₂e</Text>
-          )}
+    <Screen>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 24 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={t.colors.primary} />}
+      >
+        <View style={styles.topRow}>
+          <Button title="← Retour" variant="ghost" size="sm" onPress={() => router.back()} />
+          <Button title="Déconnexion" variant="outline" size="sm" onPress={handleLogout} />
         </View>
-      )}
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Énergie & intensité</Text>
-        <Text style={styles.sectionText}>
-          Consommation énergie : {(site.energyConsumptionKwh / 1000).toLocaleString("fr-FR")} MWh/an
-        </Text>
-        {result && (
-          <>
-            <Text style={styles.sectionText}>
-              Construction : {((result.constructionCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
-            </Text>
-            <Text style={styles.sectionText}>
-              Exploitation : {((result.exploitationCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
-            </Text>
-            <Text style={styles.sectionMeta}>
-              Dernier calcul : {new Date(result.calculatedAt).toLocaleDateString("fr-FR")}
-            </Text>
-          </>
+        <AppText variant="title" style={{ marginTop: 6 }}>
+          {site.name}
+        </AppText>
+        <AppText variant="muted" style={{ marginTop: 6 }}>
+          {site.surfaceM2.toLocaleString("fr-FR")} m² · {site.employeeCount} pers.
+        </AppText>
+
+        {site.buildingType && (
+          <AppText variant="caption" style={{ marginTop: 4 }}>
+            {site.buildingType} {site.usageType ? `· ${site.usageType}` : ""}
+          </AppText>
         )}
-      </View>
 
-      {result && scenarioResult && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Scénario rapide (-10 % énergie, +20 % renouvelable)</Text>
-          <Text style={styles.sectionText}>
-            CO₂ total actuel : {((result.totalCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
-          </Text>
-          <Text style={styles.sectionText}>
-            CO₂ total scénario : {((scenarioResult.totalCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
-          </Text>
-          {result.totalCo2Kg != null && scenarioResult.totalCo2Kg != null && (
-            <Text style={styles.sectionMeta}>
-              {(() => {
-                const deltaT = (scenarioResult.totalCo2Kg - result.totalCo2Kg) / 1000;
-                const baseT = (result.totalCo2Kg ?? 0) / 1000;
-                const pct = baseT > 0 ? (deltaT / baseT) * 100 : 0;
-                if (deltaT < 0) {
-                  return `Gain estimé : -${Math.abs(deltaT).toFixed(2)} tCO₂e (${Math.abs(pct).toFixed(1)} %).`;
-                }
-                if (deltaT > 0) {
-                  return `Surcoût carbone estimé : +${deltaT.toFixed(2)} tCO₂e (${pct.toFixed(1)} %).`;
-                }
-                return "Ce scénario ne change pas significativement les émissions totales.";
-              })()}
-            </Text>
-          )}
+        {error && (
+          <View style={{ marginTop: theme.spacing.md }}>
+            <Banner text={error} variant="error" />
+          </View>
+        )}
+
+        <View style={styles.kpiRow}>
+          <Kpi label="CO₂ total" value={totalT != null ? `${totalT.toFixed(2)} tCO₂e` : "—"} />
+          <Kpi label="CO₂ / m²" value={result?.co2PerM2 != null ? `${result.co2PerM2.toFixed(2)} kgCO₂e/m²` : "—"} />
+          <Kpi
+            label="CO₂ / employé"
+            value={result?.co2PerEmployee != null ? `${result.co2PerEmployee.toFixed(2)} kgCO₂e/employé` : "—"}
+          />
         </View>
-      )}
 
-      <View style={styles.buttonsRow}>
-        <TouchableOpacity
-          onPress={handleRecalculate}
-          disabled={recalcLoading}
-          style={[styles.button, styles.buttonPrimary, recalcLoading && styles.buttonDisabled]}
-        >
-          <Text style={styles.buttonText}>
-            {recalcLoading ? "Recalcul..." : "Recalculer"}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.push(`/sites/${site.id}/history` as any)}
-          style={[styles.button, styles.buttonSecondary]}
-        >
-          <Text style={styles.buttonSecondaryText}>Historique</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.push(`/sites/${site.id}/quick-exploitation` as any)}
-          style={[styles.button, styles.buttonSecondary]}
-        >
-          <Text style={styles.buttonSecondaryText}>Saisie exploitation</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.push(`/sites/${site.id}/quick-materials` as any)}
-          style={[styles.button, styles.buttonSecondary]}
-        >
-          <Text style={styles.buttonSecondaryText}>Saisie matériaux</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleScenarioQuick}
-          disabled={scenarioLoading}
-          style={[styles.button, styles.buttonSecondary]}
-        >
-          <Text style={styles.buttonSecondaryText}>
-            {scenarioLoading ? "Scénario..." : "Scénario -10% / +20%"}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleOpenReport}
-          style={[styles.button, styles.buttonSecondary]}
-        >
-          <Text style={styles.buttonSecondaryText}>Ouvrir le rapport PDF</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        {result && (result.scope1Co2Kg != null || result.scope2Co2Kg != null || result.scope3Co2Kg != null) && (
+          <Card style={{ marginTop: theme.spacing.md }}>
+            <AppText variant="kpi">Scopes</AppText>
+            <View style={styles.scopeRow}>
+              {result.scope1Co2Kg != null && (
+                <AppText variant="muted">Scope 1 : {(result.scope1Co2Kg / 1000).toFixed(2)} tCO₂e</AppText>
+              )}
+              {result.scope2Co2Kg != null && (
+                <AppText variant="muted">Scope 2 : {(result.scope2Co2Kg / 1000).toFixed(2)} tCO₂e</AppText>
+              )}
+              {result.scope3Co2Kg != null && (
+                <AppText variant="muted">Scope 3 : {(result.scope3Co2Kg / 1000).toFixed(2)} tCO₂e</AppText>
+              )}
+            </View>
+          </Card>
+        )}
+
+        <Card style={{ marginTop: theme.spacing.md }}>
+          <AppText variant="kpi">Énergie & intensité</AppText>
+          <AppText variant="muted" style={{ marginTop: 6 }}>
+            Consommation énergie : {(site.energyConsumptionKwh / 1000).toLocaleString("fr-FR")} MWh/an
+          </AppText>
+          {result && (
+            <>
+              <AppText variant="muted" style={{ marginTop: 6 }}>
+                Construction : {((result.constructionCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
+              </AppText>
+              <AppText variant="muted" style={{ marginTop: 2 }}>
+                Exploitation : {((result.exploitationCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
+              </AppText>
+              <AppText variant="caption" style={{ marginTop: 8 }}>
+                Dernier calcul : {new Date(result.calculatedAt).toLocaleDateString("fr-FR")}
+              </AppText>
+            </>
+          )}
+        </Card>
+
+        {result && scenarioResult && (
+          <Card style={{ marginTop: theme.spacing.md }}>
+            <AppText variant="kpi">Scénario rapide</AppText>
+            <AppText variant="muted" style={{ marginTop: 6 }}>
+              -10 % énergie · +20 % renouvelable
+            </AppText>
+            <AppText variant="muted" style={{ marginTop: 10 }}>
+              CO₂ total actuel : {((result.totalCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
+            </AppText>
+            <AppText variant="muted" style={{ marginTop: 2 }}>
+              CO₂ total scénario : {((scenarioResult.totalCo2Kg ?? 0) / 1000).toFixed(2)} tCO₂e
+            </AppText>
+            {result.totalCo2Kg != null && scenarioResult.totalCo2Kg != null && (
+              <AppText variant="caption" style={{ marginTop: 8 }}>
+                {(() => {
+                  const deltaT = (scenarioResult.totalCo2Kg - result.totalCo2Kg) / 1000;
+                  const baseT = (result.totalCo2Kg ?? 0) / 1000;
+                  const pct = baseT > 0 ? (deltaT / baseT) * 100 : 0;
+                  if (deltaT < 0) return `Gain estimé : -${Math.abs(deltaT).toFixed(2)} tCO₂e (${Math.abs(pct).toFixed(1)} %).`;
+                  if (deltaT > 0) return `Surcoût carbone estimé : +${deltaT.toFixed(2)} tCO₂e (${pct.toFixed(1)} %).`;
+                  return "Ce scénario ne change pas significativement les émissions totales.";
+                })()}
+              </AppText>
+            )}
+          </Card>
+        )}
+
+        <View style={styles.buttonsStack}>
+          <Button title="Modifier le site" variant="outline" onPress={() => router.push(`/sites-form?id=${site.id}` as any)} />
+          <View style={{ height: 10 }} />
+          <Button title={recalcLoading ? "Recalcul..." : "Recalculer"} onPress={handleRecalculate} loading={recalcLoading} />
+          <View style={{ height: 10 }} />
+          <Button title="Historique" variant="outline" onPress={() => router.push(`/sites/${site.id}/history` as any)} />
+          <View style={{ height: 10 }} />
+          <Button
+            title="Saisie exploitation"
+            variant="outline"
+            onPress={() => router.push(`/sites/${site.id}/quick-exploitation` as any)}
+          />
+          <View style={{ height: 10 }} />
+          <Button
+            title="Saisie matériaux"
+            variant="outline"
+            onPress={() => router.push(`/sites/${site.id}/quick-materials` as any)}
+          />
+          <View style={{ height: 10 }} />
+          <Button
+            title={scenarioLoading ? "Scénario..." : "Scénario -10% / +20%"}
+            variant="secondary"
+            onPress={handleScenarioQuick}
+            loading={scenarioLoading}
+          />
+        </View>
+      </ScrollView>
+    </Screen>
   );
 }
 
 function Kpi({ label, value }: { label: string; value: string }) {
+  const t = useAppTheme();
   return (
-    <View style={styles.kpi}>
-      <Text style={styles.kpiLabel}>{label}</Text>
-      <Text style={styles.kpiValue}>{value}</Text>
-    </View>
+    <Card style={styles.kpi}>
+      <AppText variant="caption">{label}</AppText>
+      <AppText variant="kpi" style={{ marginTop: 6, color: t.colors.primary }}>
+        {value}
+      </AppText>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#020817",
     paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingTop: 8,
   },
   center: {
     flex: 1,
-    backgroundColor: "#020817",
     alignItems: "center",
     justifyContent: "center",
   },
-  back: {
-    color: "#e5e7eb",
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "white",
-  },
-  subtitle: {
-    color: "#9ca3af",
-    marginTop: 4,
-  },
-  subtitleSmall: {
-    color: "#9ca3af",
-    marginTop: 2,
-    fontSize: 12,
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
   },
   kpiRow: {
     flexDirection: "row",
@@ -335,86 +330,14 @@ const styles = StyleSheet.create({
   },
   kpi: {
     flex: 1,
-    backgroundColor: "#020617",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#1f2933",
-    padding: 10,
-  },
-  kpiLabel: {
-    color: "#9ca3af",
-    fontSize: 11,
-  },
-  kpiValue: {
-    color: "#e5e7eb",
-    fontWeight: "600",
-    marginTop: 4,
-  },
-  section: {
-    marginTop: 20,
-    backgroundColor: "#020617",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#1f2933",
-    padding: 14,
-  },
-  sectionTitle: {
-    color: "#e5e7eb",
-    fontWeight: "600",
-    marginBottom: 6,
-  },
-  sectionText: {
-    color: "#9ca3af",
-    fontSize: 13,
-  },
-  sectionMeta: {
-    color: "#6b7280",
-    fontSize: 11,
-    marginTop: 4,
+    padding: 12,
   },
   scopeRow: {
-    marginTop: 8,
+    marginTop: 10,
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
   },
-  scopeText: {
-    color: "#9ca3af",
-    fontSize: 11,
-  },
-  buttonsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginTop: 20,
-  },
-  button: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 999,
-  },
-  buttonPrimary: {
-    backgroundColor: "#22d3ee",
-  },
-  buttonSecondary: {
-    borderWidth: 1,
-    borderColor: "#374151",
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: "#0f172a",
-    fontWeight: "600",
-    fontSize: 13,
-  },
-  buttonSecondaryText: {
-    color: "#e5e7eb",
-    fontWeight: "500",
-    fontSize: 13,
-  },
-  error: {
-    color: "#f97373",
-  },
+  buttonsStack: { marginTop: theme.spacing.lg },
 });
 

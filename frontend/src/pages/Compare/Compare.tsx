@@ -3,7 +3,7 @@ import { useSites } from "@/hooks/useSites";
 import PageHeader from "@/components/ui/PageHeader";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { ArrowUpDown, ArrowUp, ArrowDown, ChartNoAxes } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, BarChart3 } from "lucide-react";
 
 const tooltipStyle = {
   background: "hsl(215, 25%, 14%)",
@@ -138,7 +138,7 @@ export default function Compare() {
                       title={excludedFromChart.includes(d.id) ? "Inclure dans le graphique" : "Exclure du graphique"}
                       className={`p-1.5 rounded-md transition-colors ${excludedFromChart.includes(d.id) ? "bg-cap-vibrant/20 text-cap-vibrant" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                     >
-                      <ChartNoAxes className="w-4 h-4" />
+                      <BarChart3 className="w-4 h-4" />
                     </button>
                   </td>
                   <td className="px-4 sm:px-6 py-3.5 font-medium text-card-foreground whitespace-nowrap">{d.fullName}</td>
@@ -207,7 +207,7 @@ export default function Compare() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground py-8 text-center">
-              Tous les sites sélectionnés sont exclus du graphique. Cliquez sur l’icône <ChartNoAxes className="w-4 h-4 inline mx-0.5" /> dans le tableau pour en réafficher.
+              Tous les sites sélectionnés sont exclus du graphique. Cliquez sur l’icône <BarChart3 className="w-4 h-4 inline mx-0.5" /> dans le tableau pour en réafficher.
             </p>
           )}
         </motion.div>

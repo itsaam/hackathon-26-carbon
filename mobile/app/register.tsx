@@ -1,7 +1,14 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
 import { router } from "expo-router";
 import { setToken } from "../lib/auth";
+import { apiJson, getUserErrorMessage } from "../lib/api";
+import { Screen } from "../ui/components/Screen";
+import { AppText } from "../ui/components/AppText";
+import { Input } from "../ui/components/Input";
+import { Button } from "../ui/components/Button";
+import { Banner } from "../ui/components/Banner";
+import { theme } from "../ui/theme";
 
 const MIN_PASSWORD_LENGTH = 6;
 
@@ -30,72 +37,74 @@ export default function RegisterScreen() {
 
     try {
       setLoading(true);
-      const res = await fetch(process.env.EXPO_PUBLIC_API_URL + "/api/auth/register", {
+      const data = await apiJson<{ token: string }>("/api/auth/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        auth: false,
         body: JSON.stringify({ fullName: fullName.trim() || null, email: email.trim(), password }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.message || data.error || "Inscription impossible");
-        return;
-      }
       await setToken(data.token);
-      router.replace("/sites");
+      router.replace("/dashboard");
     } catch (e) {
-      setError("Erreur réseau");
+      setError(getUserErrorMessage(e));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-      <View style={styles.container}>
-        <Text style={styles.title}>CarbonTrack Mobile</Text>
-        <Text style={styles.subtitle}>Créer un compte</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nom complet"
-          placeholderTextColor="#64748b"
-          autoCapitalize="words"
-          value={fullName}
-          onChangeText={setFullName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#64748b"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Mot de passe (min. 6 caractères)"
-          placeholderTextColor="#64748b"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Confirmer le mot de passe"
-          placeholderTextColor="#64748b"
-          secureTextEntry
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
-        {error && <Text style={styles.error}>{error}</Text>}
-        <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
-          {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.buttonText}>S'inscrire</Text>}
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.linkButton} onPress={() => router.back()}>
-          <Text style={styles.linkText}>Déjà un compte ? Se connecter</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+    <Screen>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <AppText variant="title">Créer un compte</AppText>
+            <AppText variant="muted">Accédez à vos sites et aux indicateurs clés depuis le mobile.</AppText>
+          </View>
+
+          <Input placeholder="Nom complet (optionnel)" autoCapitalize="words" value={fullName} onChangeText={setFullName} />
+          <View style={{ height: theme.spacing.sm }} />
+          <Input
+            placeholder="Email"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+            autoCorrect={false}
+            textContentType="emailAddress"
+            inputMode="email"
+          />
+          <View style={{ height: theme.spacing.sm }} />
+          <Input
+            placeholder={`Mot de passe (min. ${MIN_PASSWORD_LENGTH} caractères)`}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            textContentType="newPassword"
+          />
+          <View style={{ height: theme.spacing.sm }} />
+          <Input
+            placeholder="Confirmer le mot de passe"
+            secureTextEntry
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            textContentType="password"
+          />
+
+          {error && (
+            <View style={{ marginTop: theme.spacing.md }}>
+              <Banner text={error} variant="error" />
+            </View>
+          )}
+
+          <View style={{ marginTop: theme.spacing.lg }}>
+            <Button title="S'inscrire" onPress={handleRegister} loading={loading} />
+          </View>
+
+          <View style={{ marginTop: theme.spacing.lg, alignItems: "center" }}>
+            <Button title="Déjà un compte ? Se connecter" variant="ghost" onPress={() => router.back()} />
+          </View>
+        </View>
+      </ScrollView>
+    </Screen>
   );
 }
 
@@ -105,55 +114,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 24,
   },
-  container: {
-    flex: 1,
-    backgroundColor: "#020817",
-    paddingHorizontal: 24,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "white",
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#a5b4fc",
-    marginBottom: 24,
-  },
-  input: {
-    backgroundColor: "#020617",
-    borderWidth: 1,
-    borderColor: "#1e293b",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: "white",
-    marginBottom: 12,
-  },
-  button: {
-    marginTop: 8,
-    backgroundColor: "#22d3ee",
-    borderRadius: 999,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#0f172a",
-    fontWeight: "600",
-    fontSize: 15,
-  },
-  linkButton: {
-    marginTop: 16,
-    alignItems: "center",
-  },
-  linkText: {
-    color: "#a5b4fc",
-    fontSize: 14,
-  },
-  error: {
-    color: "#f97373",
-    marginBottom: 4,
-    fontSize: 13,
-  },
+  container: { flex: 1, paddingHorizontal: 24 },
+  header: { marginBottom: theme.spacing.xl },
 });

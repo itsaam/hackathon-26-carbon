@@ -1,121 +1,92 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { setToken } from "../lib/auth";
+import { apiJson, getUserErrorMessage } from "../lib/api";
+import { Screen } from "../ui/components/Screen";
+import { AppText } from "../ui/components/AppText";
+import { Input } from "../ui/components/Input";
+import { Button } from "../ui/components/Button";
+import { Banner } from "../ui/components/Banner";
+import { useAppTheme } from "../ui/useTheme";
+import { theme } from "../ui/theme";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useAppTheme();
 
   const handleLogin = async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(process.env.EXPO_PUBLIC_API_URL + "/api/auth/login", {
+      const data = await apiJson<{ token: string }>("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        auth: false,
         body: JSON.stringify({ email, password }),
       });
-      if (!res.ok) {
-        setError("Identifiants invalides");
-        return;
-      }
-      const data = await res.json();
       await setToken(data.token);
-      router.replace("/sites");
+      router.replace("/dashboard");
     } catch (e) {
-      setError("Erreur réseau");
+      setError(getUserErrorMessage(e));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>CarbonTrack Mobile</Text>
-      <Text style={styles.subtitle}>Connexion</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#64748b"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Mot de passe"
-        placeholderTextColor="#64748b"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      {error && <Text style={styles.error}>{error}</Text>}
-      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-        {loading ? <ActivityIndicator color="#0f172a" /> : <Text style={styles.buttonText}>Se connecter</Text>}
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.linkButton} onPress={() => router.push("/register")}>
-        <Text style={styles.linkText}>Créer un compte</Text>
-      </TouchableOpacity>
-    </View>
+    <Screen style={styles.screen}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <AppText variant="title">CarbonTrack</AppText>
+          <AppText variant="subtitle">Connexion</AppText>
+        </View>
+
+        <Input
+          placeholder="Email"
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+          autoCorrect={false}
+          textContentType="emailAddress"
+          inputMode="email"
+        />
+        <View style={{ height: theme.spacing.sm }} />
+        <Input
+          placeholder="Mot de passe"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+          textContentType="password"
+        />
+
+        {error && (
+          <View style={{ marginTop: theme.spacing.md }}>
+            <Banner text={error} variant="error" />
+          </View>
+        )}
+
+        <View style={{ marginTop: theme.spacing.lg }}>
+          <Button title="Se connecter" onPress={handleLogin} loading={loading} />
+        </View>
+
+        <View style={{ marginTop: theme.spacing.lg, alignItems: "center" }}>
+          <Button title="Créer un compte" variant="ghost" onPress={() => router.push("/register")} />
+          <AppText variant="caption" style={{ marginTop: theme.spacing.sm, color: t.colors.mutedForeground }}>
+            Astuce: utilisez les mêmes identifiants que sur le web.
+          </AppText>
+        </View>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#020817",
-    paddingHorizontal: 24,
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "white",
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#a5b4fc",
-    marginBottom: 24,
-  },
-  input: {
-    backgroundColor: "#020617",
-    borderWidth: 1,
-    borderColor: "#1e293b",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: "white",
-    marginBottom: 12,
-  },
-  button: {
-    marginTop: 8,
-    backgroundColor: "#22d3ee",
-    borderRadius: 999,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#0f172a",
-    fontWeight: "600",
-    fontSize: 15,
-  },
-  error: {
-    color: "#f97373",
-    marginBottom: 4,
-    fontSize: 13,
-  },
-  linkButton: {
-    marginTop: 16,
-    alignItems: "center",
-  },
-  linkText: {
-    color: "#a5b4fc",
-    fontSize: 14,
-  },
+  screen: { paddingHorizontal: 0 },
+  container: { flex: 1, paddingHorizontal: 24, justifyContent: "center" },
+  header: { marginBottom: theme.spacing.xl },
 });
 

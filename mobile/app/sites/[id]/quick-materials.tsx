@@ -1,7 +1,13 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import { getToken } from "../../../lib/auth";
+import { apiJson, clampNonNegative, parseFrNumber } from "../../../lib/api";
+import { Screen } from "../../../ui/components/Screen";
+import { AppText } from "../../../ui/components/AppText";
+import { Input } from "../../../ui/components/Input";
+import { Button } from "../../../ui/components/Button";
+import { Banner } from "../../../ui/components/Banner";
+import { theme } from "../../../ui/theme";
 
 type MaterialKey = "concrete" | "steel" | "glass" | "wood";
 
@@ -32,21 +38,27 @@ export default function QuickMaterialsScreen() {
     try {
       setSaving(true);
       setError(null);
-      const token = await getToken();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const concreteT = parseFrNumber(values.concrete);
+      const steelT = parseFrNumber(values.steel);
+      const glassT = parseFrNumber(values.glass);
+      const woodT = parseFrNumber(values.wood);
 
       const payload = {
-        concreteTons: values.concrete ? Number(values.concrete) : 0,
-        steelTons: values.steel ? Number(values.steel) : 0,
-        glassTons: values.glass ? Number(values.glass) : 0,
-        woodTons: values.wood ? Number(values.wood) : 0,
+        concreteTons: concreteT != null ? clampNonNegative(concreteT) : 0,
+        steelTons: steelT != null ? clampNonNegative(steelT) : 0,
+        glassTons: glassT != null ? clampNonNegative(glassT) : 0,
+        woodTons: woodT != null ? clampNonNegative(woodT) : 0,
       };
 
-      await fetch(process.env.EXPO_PUBLIC_API_URL + `/api/sites/${id}/composition`, {
+      await apiJson(`/api/sites/${id}/composition`, {
         method: "POST",
-        headers,
         body: JSON.stringify(payload),
+      });
+
+      const year = 2024;
+      await apiJson(`/api/sites/${id}/results/calculate`, {
+        method: "POST",
+        body: JSON.stringify({ year }),
       });
 
       router.replace(`/sites/${id}` as any);
@@ -58,101 +70,51 @@ export default function QuickMaterialsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }}>
-      <TouchableOpacity onPress={() => router.back()}>
-        <Text style={styles.back}>← Retour</Text>
-      </TouchableOpacity>
-      <Text style={styles.title}>Saisie matériaux (rapide)</Text>
-      <Text style={styles.subtitle}>
-        Saisissez une estimation des tonnages par matériau principal. Ces valeurs servent à illustrer la
-        modélisation ACV dans le rapport.
-      </Text>
+    <Screen>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+        <Button title="← Retour" variant="ghost" size="sm" onPress={() => router.back()} />
+        <AppText variant="title" style={{ marginTop: 6 }}>
+          Saisie matériaux
+        </AppText>
+        <AppText variant="muted" style={{ marginTop: 6 }}>
+          Estimation des tonnages (t) par matériau principal.
+        </AppText>
 
-      {(Object.keys(MATERIAL_LABELS) as MaterialKey[]).map((key) => (
-        <View key={key} style={styles.field}>
-          <Text style={styles.fieldLabel}>{MATERIAL_LABELS[key]}</Text>
-          <TextInput
-            keyboardType="numeric"
-            value={values[key]}
-            onChangeText={(v) => setValue(key, v)}
-            placeholder="0"
-            placeholderTextColor="#6b7280"
-            style={styles.input}
-          />
+        <View style={{ height: theme.spacing.lg }} />
+        {(Object.keys(MATERIAL_LABELS) as MaterialKey[]).map((key) => (
+          <View key={key} style={styles.field}>
+            <AppText variant="muted" style={styles.fieldLabel}>
+              {MATERIAL_LABELS[key]}
+            </AppText>
+            <Input keyboardType="numeric" value={values[key]} onChangeText={(v) => setValue(key, v)} placeholder="0" />
+          </View>
+        ))}
+
+        {error && (
+          <View style={{ marginTop: theme.spacing.md }}>
+            <Banner text={error} variant="error" />
+          </View>
+        )}
+
+        <View style={{ marginTop: theme.spacing.lg }}>
+          <Button title={saving ? "Enregistrement..." : "Enregistrer & recalculer"} onPress={handleSave} loading={saving} />
         </View>
-      ))}
-
-      {error && <Text style={styles.error}>{error}</Text>}
-
-      <TouchableOpacity
-        onPress={handleSave}
-        disabled={saving}
-        style={[styles.button, saving && styles.buttonDisabled]}
-      >
-        <Text style={styles.buttonText}>{saving ? "Enregistrement..." : "Enregistrer & recalculer"}</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#020817",
     paddingHorizontal: 16,
-    paddingTop: 24,
-  },
-  back: {
-    color: "#e5e7eb",
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "white",
-  },
-  subtitle: {
-    color: "#9ca3af",
-    marginTop: 4,
-    marginBottom: 12,
-    fontSize: 13,
+    paddingTop: 8,
   },
   field: {
     marginBottom: 10,
   },
   fieldLabel: {
-    color: "#9ca3af",
-    fontSize: 13,
     marginBottom: 4,
-  },
-  input: {
-    backgroundColor: "#020617",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#1f2933",
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    color: "#e5e7eb",
-    fontSize: 13,
-  },
-  button: {
-    marginTop: 16,
-    backgroundColor: "#22d3ee",
-    borderRadius: 999,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: "#0f172a",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  error: {
-    color: "#f97373",
-    marginTop: 8,
   },
 });
 

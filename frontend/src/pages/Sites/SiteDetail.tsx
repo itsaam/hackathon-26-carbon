@@ -6,7 +6,7 @@ import { ArrowLeft, RefreshCw, Building2, Users, Zap, Car, Cpu, MapPin, Info, Sl
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { apiFetch, getAuthToken } from "@/lib/api";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function SiteDetail() {
   const { id } = useParams();
@@ -21,10 +21,76 @@ export default function SiteDetail() {
   const [scenarioLabel, setScenarioLabel] = useState("Scénario énergie + renouvelable");
   const [scenarioIncludeComparison, setScenarioIncludeComparison] = useState(true);
   const [scenarioIncludeKpis, setScenarioIncludeKpis] = useState(true);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
+  const [teleworkLoading, setTeleworkLoading] = useState(false);
+  const [teleworkError, setTeleworkError] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [forecast, setForecast] = useState<WeatherForecast | null>(null);
+  const [telework, setTelework] = useState<TeleworkRecommendation | null>(null);
   const site = getSite(Number(id));
   const result = getLatestResult(Number(id));
 
   if (!site) return <div className="text-center py-20 text-muted-foreground">Site non trouvé.</div>;
+
+  const canLoadWeather = typeof site.latitude === "number" && typeof site.longitude === "number";
+
+  useEffect(() => {
+    if (!canLoadWeather) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setWeatherLoading(true);
+        setWeatherError(null);
+        const data = await apiFetch<WeatherForecast>(
+          `/api/weather/forecast?latitude=${site.latitude}&longitude=${site.longitude}&forecastDays=7&timezone=Europe%2FParis`
+        );
+        if (!cancelled) setForecast(data);
+      } catch {
+        if (!cancelled) setWeatherError("Impossible de charger la météo.");
+      } finally {
+        if (!cancelled) setWeatherLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [canLoadWeather, site.latitude, site.longitude]);
+
+  useEffect(() => {
+    if (!canLoadWeather || !selectedDate) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setTeleworkLoading(true);
+        setTeleworkError(null);
+        const data = await apiFetch<TeleworkRecommendation>(
+          `/api/recommendations/telework?latitude=${site.latitude}&longitude=${site.longitude}&date=${encodeURIComponent(selectedDate)}&timezone=Europe%2FParis`
+        );
+        if (!cancelled) setTelework(data);
+      } catch {
+        if (!cancelled) setTeleworkError("Impossible de calculer la recommandation.");
+      } finally {
+        if (!cancelled) setTeleworkLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [canLoadWeather, selectedDate, site.latitude, site.longitude]);
+
+  const selectedDateSnapshot = useMemo(() => {
+    if (!forecast?.hourly?.length) return null;
+    if (!selectedDate) return null;
+    const pts = forecast.hourly.filter((p) => p?.time?.startsWith(selectedDate));
+    if (!pts.length) return null;
+    const temps = pts.map((p) => p.temperatureC).filter((v): v is number => typeof v === "number");
+    const minTemp = temps.length ? Math.min(...temps) : null;
+    const maxTemp = temps.length ? Math.max(...temps) : null;
+    const precip = pts.map((p) => p.precipitationMm).filter((v): v is number => typeof v === "number");
+    const totalPrecip = precip.reduce((s, v) => s + v, 0);
+    return { minTemp, maxTemp, totalPrecip };
+  }, [forecast, selectedDate]);
 
   const handleRecalculate = async () => {
     if (!site) return;
@@ -269,6 +335,60 @@ export default function SiteDetail() {
               </div>
             </div>
           )}
+          <div className="pt-4 border-t border-border space-y-3">
+            <h3 className="text-sm font-semibold text-card-foreground flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-muted-foreground" /> Météo & recommandation
+            </h3>
+            {!canLoadWeather ? (
+              <p className="text-xs text-muted-foreground">
+                Ajoutez la latitude/longitude du site pour afficher les prévisions météo et la recommandation de télétravail.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="text-xs text-muted-foreground">
+                    Date
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="ml-2 px-2 py-1 rounded-md border border-border bg-background text-xs"
+                    />
+                  </label>
+                  {selectedDateSnapshot && (
+                    <span className="text-xs text-muted-foreground">
+                      Prévision : {selectedDateSnapshot.minTemp != null ? `${selectedDateSnapshot.minTemp.toFixed(1)}°C` : "—"} →{" "}
+                      {selectedDateSnapshot.maxTemp != null ? `${selectedDateSnapshot.maxTemp.toFixed(1)}°C` : "—"} · {selectedDateSnapshot.totalPrecip.toFixed(1)} mm
+                    </span>
+                  )}
+                </div>
+
+                {(weatherError || teleworkError) && (
+                  <p className="text-xs text-destructive">{weatherError || teleworkError}</p>
+                )}
+
+                <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1">
+                  <p className="text-xs text-muted-foreground">
+                    {weatherLoading || teleworkLoading ? "Chargement..." : "Recommandation"}
+                  </p>
+                  {telework ? (
+                    <>
+                      <p className="text-sm font-semibold text-card-foreground">
+                        {telework.teleworkAdvised ? "Télétravail conseillé" : "Présence possible"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{telework.reason}</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Min: {telework.minTemperatureC != null ? `${telework.minTemperatureC.toFixed(1)}°C` : "—"} · Risque verglas:{" "}
+                        {telework.iceRisk ? "Oui" : "Non"}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">—</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           {(site.buildingType || site.usageType || site.yearOfConstruction) && (
             <div className="pt-4 border-t border-border space-y-2">
               <h3 className="text-sm font-semibold text-card-foreground flex items-center gap-2">
@@ -538,3 +658,24 @@ function InfoRow({
     </div>
   );
 }
+
+type WeatherForecast = {
+  latitude?: number;
+  longitude?: number;
+  timezone?: string;
+  hourly?: Array<{
+    time?: string;
+    temperatureC?: number | null;
+    precipitationMm?: number | null;
+    rainMm?: number | null;
+    snowfallCm?: number | null;
+  }>;
+};
+
+type TeleworkRecommendation = {
+  teleworkAdvised: boolean;
+  reason: string;
+  date: string;
+  minTemperatureC?: number | null;
+  iceRisk: boolean;
+};

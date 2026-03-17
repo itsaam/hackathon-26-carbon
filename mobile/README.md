@@ -12,6 +12,11 @@ Configurer l’URL du backend dans un fichier `.env` à la racine du dossier `mo
 EXPO_PUBLIC_API_URL=http://192.168.X.Y:8080
 ```
 
+Notes importantes :
+
+- Si tu es en **partage de connexion** (hotspot), l’IP du PC change souvent (ex: `172.20.10.11`). Refaire `ipconfig` et mettre `EXPO_PUBLIC_API_URL=http://<IP_DU_PC>:8080`.
+- Sur **iPhone / Expo Go**, vérifier que l’app **Expo Go** a l’autorisation **Réseau local** (Réglages → Expo Go → Réseau local), sinon les requêtes vers une IP locale peuvent échouer avec `Network request failed`.
+
 ## Lancer en local
 
 ```bash

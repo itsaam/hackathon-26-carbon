@@ -1,17 +1,25 @@
 import React from "react";
 import { Slot } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { View } from "react-native";
+import { ThemeProvider } from "../ui/ThemeProvider";
+import { Screen } from "../ui/components/Screen";
+import { useAppTheme } from "../ui/useTheme";
+
+function RootLayoutInner() {
+  const t = useAppTheme();
+  return (
+    <Screen>
+      <StatusBar style={t.scheme === "dark" ? "light" : "dark"} />
+      <Slot />
+    </Screen>
+  );
+}
 
 export default function RootLayout() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#020817" }}>
-      <StatusBar style="light" />
-      <View style={{ flex: 1 }}>
-        <Slot />
-      </View>
-    </SafeAreaView>
+    <ThemeProvider>
+      <RootLayoutInner />
+    </ThemeProvider>
   );
 }
 

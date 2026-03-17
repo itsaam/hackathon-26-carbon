@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { View, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
-import { getToken } from "../lib/auth";
+import { apiJson, getUserErrorMessage } from "../lib/api";
+import { clearToken } from "../lib/auth";
+import { Screen } from "../ui/components/Screen";
+import { AppText } from "../ui/components/AppText";
+import { Card } from "../ui/components/Card";
+import { Button } from "../ui/components/Button";
+import { Banner } from "../ui/components/Banner";
+import { useAppTheme } from "../ui/useTheme";
+import { theme } from "../ui/theme";
 
 interface Site {
   id: number;
@@ -14,104 +22,130 @@ interface Site {
 export default function SitesScreen() {
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useAppTheme();
+
+  const load = async () => {
+    const data = await apiJson<Site[]>("/api/sites");
+    setSites(Array.isArray(data) ? data : []);
+  };
 
   useEffect(() => {
-    const load = async () => {
+    const run = async () => {
       try {
         setLoading(true);
         setError(null);
-        const token = await getToken();
-        const res = await fetch(process.env.EXPO_PUBLIC_API_URL + "/api/sites", {
-          headers: {
-            "Authorization": token ? `Bearer ${token}` : "",
-          },
-        });
-        if (!res.ok) {
-          setError("Impossible de charger les sites");
-          return;
-        }
-        const data = await res.json();
-        setSites(data);
-      } catch {
-        setError("Erreur réseau");
+        await load();
+      } catch (e) {
+        setError(getUserErrorMessage(e));
       } finally {
         setLoading(false);
       }
     };
-    load();
+    run();
   }, []);
 
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      setError(null);
+      await load();
+    } catch (e) {
+      setError(getUserErrorMessage(e));
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await clearToken();
+    router.replace("/login");
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Vos sites</Text>
-      {loading && <ActivityIndicator color="#22d3ee" style={{ marginTop: 16 }} />}
-      {error && <Text style={styles.error}>{error}</Text>}
-      <FlatList<Site>
-        data={sites}
-        keyExtractor={(item: Site) => String(item.id)}
-        contentContainerStyle={{ paddingVertical: 16 }}
-        renderItem={({ item }: { item: Site }) => {
-          const co2t = item.lastCo2Total ? item.lastCo2Total / 1000 : null;
-          return (
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => router.push(`/sites/${item.id}` as any)}
-            >
-              <Text style={styles.cardTitle}>{item.name}</Text>
-              <Text style={styles.cardSubtitle}>
-                {item.surfaceM2.toLocaleString("fr-FR")} m² · {item.employeeCount} pers.
-              </Text>
-              <Text style={styles.cardKpi}>
-                {co2t !== null ? `${co2t.toLocaleString("fr-FR")} tCO₂e` : "Pas encore de calcul"}
-              </Text>
-            </TouchableOpacity>
-          );
-        }}
-      />
-    </View>
+    <Screen>
+      <View style={styles.container}>
+        <View style={styles.headerRow}>
+          <View style={{ flex: 1 }}>
+            <AppText variant="title">Vos sites</AppText>
+            <AppText variant="muted">Suivi rapide des indicateurs CO₂.</AppText>
+          </View>
+          <Button title="Déconnexion" variant="outline" size="sm" onPress={handleLogout} />
+        </View>
+
+        {loading && <ActivityIndicator color={t.colors.primary} style={{ marginTop: 16 }} />}
+        {error && (
+          <View style={{ marginTop: theme.spacing.md }}>
+            <Banner text={error} variant="error" />
+          </View>
+        )}
+
+        <FlatList<Site>
+          data={sites}
+          keyExtractor={(item: Site) => String(item.id)}
+          contentContainerStyle={{ paddingVertical: 16, flexGrow: 1, gap: 12 }}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          ListEmptyComponent={
+            !loading && !error ? (
+              <Card style={styles.empty}>
+                <AppText variant="kpi">Aucun site</AppText>
+                <AppText variant="muted" style={{ marginTop: 6, textAlign: "center" }}>
+                  Créez un site depuis le web, puis revenez ici pour le consulter.
+                </AppText>
+              </Card>
+            ) : null
+          }
+          renderItem={({ item }: { item: Site }) => {
+            const co2t = item.lastCo2Total ? item.lastCo2Total / 1000 : null;
+            return (
+              <TouchableOpacity onPress={() => router.push(`/sites/${item.id}` as any)} activeOpacity={0.9}>
+                <Card>
+                  <AppText variant="kpi">{item.name}</AppText>
+                  <AppText variant="muted" style={{ marginTop: 4 }}>
+                    {item.surfaceM2.toLocaleString("fr-FR")} m² · {item.employeeCount} pers.
+                  </AppText>
+                  <AppText
+                    style={{
+                      marginTop: 10,
+                      color: co2t !== null ? t.colors.primary : t.colors.mutedForeground,
+                      fontWeight: theme.font.weight.semibold as any,
+                    }}
+                  >
+                    {co2t !== null ? `${co2t.toLocaleString("fr-FR")} tCO₂e` : "Pas encore de calcul"}
+                  </AppText>
+                </Card>
+              </TouchableOpacity>
+            );
+          }}
+        />
+
+        <View style={{ marginTop: theme.spacing.lg }}>
+          <Button title="Nouveau site" onPress={() => router.push("/sites-form" as any)} />
+        </View>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#020817",
     paddingHorizontal: 16,
-    paddingTop: 32,
+    paddingTop: 8,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "white",
-    marginBottom: 8,
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
   },
-  card: {
-    backgroundColor: "#020617",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#1e293b",
-  },
-  cardTitle: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  cardSubtitle: {
-    color: "#64748b",
-    fontSize: 13,
-    marginTop: 4,
-  },
-  cardKpi: {
-    color: "#22d3ee",
-    fontWeight: "600",
-    marginTop: 8,
-  },
-  error: {
-    color: "#f97373",
-    marginTop: 8,
+  empty: {
+    marginTop: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 22,
   },
 });
 
