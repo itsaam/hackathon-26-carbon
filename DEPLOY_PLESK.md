@@ -6,7 +6,10 @@ Ce guide décrit une mise en prod simple, robuste et “Plesk-friendly” pour c
 - **Frontend** : React + Vite (build **statique** servi par Nginx/Apache)
 - **Accès** : domaine(s) gérés par Plesk, reverse proxy **Nginx** possible
 
-L’objectif : avoir une URL publique pour le web (ex. `https://app.domaine.tld`) et une API (ex. `https://api.domaine.tld` ou `https://app.domaine.tld/api`).
+L’objectif : avoir une URL publique pour le web et une API :
+
+- Frontend : `https://carbontrack.nexsecure.fr/`
+- API : `https://api.carbontrack.nexsecure.fr`
 
 ---
 
@@ -15,28 +18,28 @@ L’objectif : avoir une URL publique pour le web (ex. `https://app.domaine.tld`
 - Accès SSH (PuTTY) avec un utilisateur sudo.
 - Plesk installé (Apache+Nginx habituels).
 - **Docker** + **Docker Compose** installés (recommandé pour le backend + DB).
-- Un ou deux domaines (ou sous-domaines) créés dans Plesk :
-  - Option 1 : `app.domaine.tld` (frontend) + `api.domaine.tld` (backend)
-  - Option 2 : `app.domaine.tld` (frontend) + backend derrière `/api`
+- Les domaines/sous-domaines (déjà fournis) :
+  - `carbontrack.nexsecure.fr` (frontend)
+  - `api.carbontrack.nexsecure.fr` (backend)
 
 ---
 
 ## Stratégie recommandée (simple & propre)
 
-### Choix A (recommandé) : 2 sous-domaines
+### Choix A (votre cas) : 2 sous-domaines
 
-- `https://app.domaine.tld` → sert le **frontend** (fichiers statiques)
-- `https://api.domaine.tld` → reverse-proxy vers le **backend** (container) sur le VPS
+- `https://carbontrack.nexsecure.fr/` → sert le **frontend** (fichiers statiques)
+- `https://api.carbontrack.nexsecure.fr` → reverse-proxy vers le **backend** (container) sur le VPS
 
 Avantages :
 - séparation claire
 - CORS facile à contrôler
 - pas de rewrite “SPA + /api” sur un même vhost
 
-### Choix B : 1 seul domaine avec `/api`
+### Choix B : 1 seul domaine avec `/api` (alternative, non nécessaire ici)
 
-- `https://app.domaine.tld` → frontend statique
-- `https://app.domaine.tld/api/...` → reverse-proxy vers backend
+- `https://carbontrack.nexsecure.fr/` → frontend statique
+- `https://carbontrack.nexsecure.fr/api/...` → reverse-proxy vers backend
 
 Avantages :
 - même origin, CORS quasi inutile
@@ -144,7 +147,7 @@ Le frontend est prévu pour tourner en statique après build.
 En dev, Vite proxy `/api/*` vers `http://localhost:8080` (cf. `frontend/README.md`).
 En prod, vous avez deux options :
 
-- **Option A (2 sous-domaines)** : le frontend appelle `https://api.domaine.tld`
+- **Option A (2 sous-domaines)** : le frontend appelle `https://api.carbontrack.nexsecure.fr`
 - **Option B (même domaine)** : le frontend appelle des URLs relatives `/api/...`
 
 Selon votre code, la configuration peut se faire via variables d’environnement Vite (préfixe `VITE_`).
@@ -168,12 +171,12 @@ Vous obtenez typiquement un dossier `dist/`.
 
 ### 3.3 Déployer les fichiers `dist/` dans Plesk
 
-Dans Plesk, pour le domaine `app.domaine.tld` :
+Dans Plesk, pour le domaine `carbontrack.nexsecure.fr` :
 - Document Root : `httpdocs/`
 - Uploader le contenu de `dist/` **dans** `httpdocs/`
 
 Résultat :
-- `https://app.domaine.tld` sert le frontend
+- `https://carbontrack.nexsecure.fr/` sert le frontend
 
 ### 3.4 Activer le routing SPA (React Router)
 
@@ -201,9 +204,9 @@ location / {
 
 ## 4) Exposer l’API via Nginx (Plesk reverse-proxy)
 
-### 4.1 Cas A : `api.domaine.tld` → backend container
+### 4.1 Cas A (votre cas) : `api.carbontrack.nexsecure.fr` → backend container
 
-Créer un sous-domaine `api.domaine.tld` dans Plesk.
+Créer un sous-domaine `api.carbontrack.nexsecure.fr` dans Plesk.
 Puis, dans **Directives nginx supplémentaires** du sous-domaine :
 
 ```nginx
@@ -217,7 +220,23 @@ location / {
 }
 ```
 
-### 4.2 Cas B : `app.domaine.tld/api` → backend container
+Conseils pratiques (souvent utiles en prod) :
+
+- **Limiter la taille** des requêtes si besoin (exports, payloads JSON, etc.) :
+
+```nginx
+client_max_body_size 20m;
+```
+
+- **Timeouts** si certaines routes sont longues (exports PDF/HTML, gros calculs) :
+
+```nginx
+proxy_connect_timeout 60s;
+proxy_send_timeout 60s;
+proxy_read_timeout 60s;
+```
+
+### 4.2 Cas B (alternative) : `carbontrack.nexsecure.fr/api` → backend container
 
 Sur le domaine du frontend, ajouter :
 
@@ -239,7 +258,7 @@ location /api/ {
 ## 5) HTTPS (Let’s Encrypt) & headers
 
 Dans Plesk :
-- Installer/activer **Let’s Encrypt** pour `app.domaine.tld` (et `api.domaine.tld` si séparé)
+- Installer/activer **Let’s Encrypt** pour `carbontrack.nexsecure.fr` **et** `api.carbontrack.nexsecure.fr`
 - Forcer la redirection HTTP → HTTPS
 
 Optionnel :
@@ -247,14 +266,19 @@ Optionnel :
 
 ---
 
-## 6) CORS (si sous-domaine API séparé)
+## 6) CORS (votre cas : sous-domaine API séparé)
 
-Si `app.` et `api.` sont séparés, le backend doit autoriser l’origine du front.
+Comme `carbontrack.nexsecure.fr` (front) et `api.carbontrack.nexsecure.fr` (API) sont deux origines différentes, le backend doit autoriser l’origine du front.
 
 À régler côté Spring (selon votre implémentation sécurité) :
-- autoriser `https://app.domaine.tld`
+- autoriser `https://carbontrack.nexsecure.fr`
 - autoriser les méthodes/headers nécessaires
 - autoriser `Authorization` (JWT)
+
+En complément, pensez à autoriser :
+- `Content-Type` (POST/PUT JSON)
+- `Authorization` (JWT)
+- méthodes `GET,POST,PUT,DELETE,OPTIONS`
 
 Si vous utilisez **le même domaine** avec `/api`, vous pouvez souvent éviter CORS.
 
@@ -287,7 +311,7 @@ Créer un service `systemd` qui exécute `docker compose up -d` au boot.
 
 ## 9) Vérifications de bout en bout
 
-- `https://app.domaine.tld` charge le frontend
+- `https://carbontrack.nexsecure.fr/` charge le frontend
 - Login fonctionne et récupère un JWT
 - Les appels API répondent (liste sites, compare, dashboard)
 - En cas de refresh sur une route interne (SPA), vous restez sur la page (rewrite ok)
@@ -313,6 +337,11 @@ docker image prune -f
 ---
 
 ## Annexes
+
+### Récapitulatif “vos domaines”
+
+- Frontend (Plesk site statique) : `https://carbontrack.nexsecure.fr/`
+- API (Plesk reverse-proxy Nginx) : `https://api.carbontrack.nexsecure.fr`
 
 ### Ports (rappel)
 

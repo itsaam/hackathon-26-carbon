@@ -1,34 +1,14 @@
 services:
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: carbon
-      POSTGRES_PASSWORD: carbon
-      POSTGRES_DB: carbon
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U carbon -d carbon"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   backend:
     build:
-      context: ./backend
+      context: ./api.carbontrack.nexsecure.fr
       dockerfile: Dockerfile
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carbon
-      SPRING_DATASOURCE_USERNAME: carbon
-      SPRING_DATASOURCE_PASSWORD: carbon
-      APP_JWT_SECRET: ${APP_JWT_SECRET:-dev-jwt-secret-change-in-production}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      APP_JWT_SECRET: ${APP_JWT_SECRET}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+    restart: unless-stopped
     ports:
-      - "8080:8080"
-
-volumes:
-  postgres_data:
+      - "127.0.0.1:8080:8080"
