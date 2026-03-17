@@ -3,7 +3,9 @@
 **Projet :** Plateforme web + mobile de pilotage de l’empreinte carbone d’un portefeuille de sites physiques (construction + exploitation)  
 **Client :** Capgemini  
 **Dates :** 16–17 mars 2026  
-**Dépôt :** `hackathon-26-carbon/`  
+**Dépôt :** `hackathon-26-carbon/`
+https://carbontrack.nexsecure.fr/dashboard
+https://drive.google.com/drive/folders/1IiZm5FaWhCHi1K5C-5cDTfmyK42NFGUR?usp=drive_link
 
 ---
 
@@ -118,7 +120,7 @@ hackathon-26-carbon/
 ### 5.1 Construction (ACV simplifiée)
 
 \[
-CO₂_{construction} = \sum_i \bigl(q_i \;(\text{tonnes}) \times EF_i \;(\text{kgCO₂e/tonne})\bigr)
+CO₂\_{construction} = \sum_i \bigl(q_i \;(\text{tonnes}) \times EF_i \;(\text{kgCO₂e/tonne})\bigr)
 \]
 
 où \(q_i\) est la quantité de matériau et \(EF_i\) son facteur d’émission.
@@ -126,16 +128,16 @@ où \(q_i\) est la quantité de matériau et \(EF_i\) son facteur d’émission.
 ### 5.2 Exploitation (annuelle)
 
 \[
-CO₂_{exploitation} = \sum_j \bigl(consommation_j \;(\text{kWh}) \times EF_j \;(\text{kgCO₂e/kWh})\bigr)
+CO₂\_{exploitation} = \sum_j \bigl(consommation_j \;(\text{kWh}) \times EF_j \;(\text{kgCO₂e/kWh})\bigr)
 \]
 
 Les facteurs énergie sont stockés en base (`energy_factors`) et initialisés en environnement dev via `backend/src/main/resources/data.sql` (inspiré ADEME 2024).
 
 ### 5.3 KPIs
 
-- \(CO₂_{total} = CO₂_{construction} + CO₂_{exploitation}\)
-- \(CO₂/m² = CO₂_{total} / surface_{m²}\)
-- \(CO₂/employé = CO₂_{total} / nbEmployés\)
+- \(CO₂*{total} = CO₂*{construction} + CO₂\_{exploitation}\)
+- \(CO₂/m² = CO₂*{total} / surface*{m²}\)
+- \(CO₂/employé = CO₂\_{total} / nbEmployés\)
 
 ---
 
@@ -437,3 +439,4 @@ Déroulé synthétique :
 - `PITCH-10MIN.md` : script complet de démonstration
 - `DEPLOY_PLESK.md` : guide de déploiement VPS/Plesk
 
+https://drive.google.com/drive/folders/1IiZm5FaWhCHi1K5C-5cDTfmyK42NFGUR?usp=drive_link
