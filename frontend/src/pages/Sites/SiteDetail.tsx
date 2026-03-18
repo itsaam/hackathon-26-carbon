@@ -631,8 +631,8 @@ export default function SiteDetail() {
         ) : null}
 
         <div className="space-y-3">
-          {dpeList.length ? (
-            dpeList.map((dpe) => (
+          {dpeList.length > 1 ? (
+            dpeList.slice(1).map((dpe) => (
               <div key={dpe.id} className="border border-border rounded-lg p-3 bg-muted/20">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -669,7 +669,7 @@ export default function SiteDetail() {
               </div>
             ))
           ) : (
-            <div className="text-sm text-muted-foreground">Aucun DPE importé pour ce site.</div>
+            <div className="text-sm text-muted-foreground">Aucun autre DPE importé pour ce site.</div>
           )}
         </div>
       </motion.div>

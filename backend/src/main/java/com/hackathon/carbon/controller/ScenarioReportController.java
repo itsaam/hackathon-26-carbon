@@ -30,6 +30,7 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
 import java.io.ByteArrayOutputStream;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/sites")
@@ -47,8 +48,10 @@ public class ScenarioReportController {
         Site site = siteRepository.findById(siteId)
                 .orElseThrow(() -> new EntityNotFoundException("Site non trouvé avec l'ID : " + siteId));
 
+        int inventoryYear = body.getInventoryYear() != null ? body.getInventoryYear() : LocalDate.now().getYear();
+
         // Point de départ : site réel
-        CarbonResult base = carbonCalculationService.estimateForSite(site, 2024);
+        CarbonResult base = carbonCalculationService.estimateForSite(site, inventoryYear);
 
         // Construction du site scénarisé (mêmes champs qu'en what-if)
         Site scenarioSite = Site.builder()
@@ -93,7 +96,7 @@ public class ScenarioReportController {
             scenarioSite.setRenewableProductionKwh(scenarioSite.getRenewableProductionKwh() * factorRenewable);
         }
 
-        CarbonResult scenario = carbonCalculationService.estimateForSite(scenarioSite, 2024);
+        CarbonResult scenario = carbonCalculationService.estimateForSite(scenarioSite, inventoryYear);
 
         byte[] pdf = buildScenarioPdf(site, base, scenario, body);
 

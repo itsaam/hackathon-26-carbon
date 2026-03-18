@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.List;
 
 @Service
@@ -126,7 +127,8 @@ public class CarbonCalculationService {
 
     /**
      * CDC : CO₂_construction = Σ (quantité_tonnes × facteur_kgCO₂e/tonne).
-     * SiteMaterial.quantity est en kg ; Material.emissionFactor en kgCO₂e/tonne → gwpPerKg = factor/1000.
+     * Unités supportées (via SiteMaterial.unit) : tonne/t, kg, m3 (si densité connue).
+     * Material.emissionFactor est en kgCO₂e/tonne (Base Carbone), et/ou Material.gwpPerKg en kgCO₂e/kg.
      */
     private double calculateConstructionEmissions(Site site) {
         List<SiteMaterial> siteMaterials = siteMaterialRepository.findBySiteId(site.getId());
@@ -134,22 +136,37 @@ public class CarbonCalculationService {
         return siteMaterials.stream()
                 .mapToDouble(sm -> {
                     Material material = sm.getMaterial();
-                    double quantityKg = sm.getQuantity() != null ? sm.getQuantity() : 0.0;
-                    Double gwpPerKg = material.getGwpPerKg();
-                    if (gwpPerKg == null && material.getEmissionFactor() != null) {
-                        // facteur en kgCO2e/tonne → kgCO2e/kg
-                        gwpPerKg = material.getEmissionFactor() / 1000.0;
-                    }
-                    if (gwpPerKg == null) {
+                    double quantity = sm.getQuantity() != null ? sm.getQuantity() : 0.0;
+                    if (quantity <= 0.0 || material == null) {
                         return 0.0;
                     }
-                    return quantityKg * gwpPerKg;
+
+                    String unit = normalizeUnit(sm.getUnit(), material.getUnit());
+
+                    // 1) Prefer direct kg-based factors if available
+                    if (material.getGwpPerKg() != null) {
+                        Double qtyKg = toKg(quantity, unit, material);
+                        return qtyKg != null ? qtyKg * material.getGwpPerKg() : 0.0;
+                    }
+
+                    // 2) Fallback to Base Carbone style (kgCO2e/tonne)
+                    if (material.getEmissionFactor() != null) {
+                        Double qtyTonnes = toTonnes(quantity, unit, material);
+                        return qtyTonnes != null ? qtyTonnes * material.getEmissionFactor() : 0.0;
+                    }
+
+                    return 0.0;
                 })
                 .sum();
     }
 
     private ExploitationEmissions calculateExploitationEmissions(Site site, int year) {
         List<EnergyFactor> factors = energyFactorRepository.findByYear(year);
+        if (factors == null || factors.isEmpty()) {
+            factors = energyFactorRepository.findTopByOrderByYearDesc()
+                    .map(List::of)
+                    .orElse(List.of());
+        }
 
         double electricityFactor = findFactorForEnergyType(factors, "electricity");
         double gasFactor = findFactorForEnergyType(factors, "gas");
@@ -163,19 +180,21 @@ public class CarbonCalculationService {
         double fuelOilKwh = defaultZero(site.getFuelOilConsumptionKwh());
         double districtHeatingKwh = defaultZero(site.getDistrictHeatingConsumptionKwh());
 
-        double electricityCo2 = electricityKwh * electricityFactor;
+        // Renouvelable : on diminue la part d'électricité réseau (évite un delta uniquement sur le total)
+        double netElectricityKwh = electricityKwh;
+        Double renewableProductionKwh = site.getRenewableProductionKwh();
+        Double selfConsumptionRate = site.getRenewableSelfConsumptionRate();
+        if (renewableProductionKwh != null && selfConsumptionRate != null) {
+            double avoidedKwh = renewableProductionKwh * selfConsumptionRate;
+            netElectricityKwh = Math.max(electricityKwh - avoidedKwh, 0.0);
+        }
+
+        double electricityCo2 = netElectricityKwh * electricityFactor;
         double gasCo2 = gasKwh * gasFactor;
         double fuelOilCo2 = fuelOilKwh * fuelOilFactor;
         double districtHeatingCo2 = districtHeatingKwh * districtHeatingFactor;
 
         double total = electricityCo2 + gasCo2 + fuelOilCo2 + districtHeatingCo2;
-
-        Double renewableProductionKwh = site.getRenewableProductionKwh();
-        Double selfConsumptionRate = site.getRenewableSelfConsumptionRate();
-        if (renewableProductionKwh != null && selfConsumptionRate != null) {
-            double avoidedKwh = renewableProductionKwh * selfConsumptionRate;
-            total -= avoidedKwh * electricityFactor;
-        }
 
         double totalNonNegative = Math.max(total, 0.0);
 
@@ -207,6 +226,45 @@ public class CarbonCalculationService {
 
     private double defaultZero(Double value) {
         return value != null ? value : 0.0;
+    }
+
+    private String normalizeUnit(String siteMaterialUnit, String materialUnit) {
+        String u = siteMaterialUnit != null ? siteMaterialUnit : materialUnit;
+        if (u == null) return "tonne";
+        u = u.trim().toLowerCase(Locale.ROOT);
+        if (u.equals("t") || u.equals("ton") || u.equals("tons")) return "tonne";
+        if (u.equals("tonnes")) return "tonne";
+        if (u.equals("kgs")) return "kg";
+        if (u.equals("m^3")) return "m3";
+        return u;
+    }
+
+    private Double toTonnes(double quantity, String unit, Material material) {
+        return switch (unit) {
+            case "tonne" -> quantity;
+            case "kg" -> quantity / 1000.0;
+            case "m3" -> {
+                if (material != null && material.getDensity() != null && material.getDensity() > 0) {
+                    yield (quantity * material.getDensity()) / 1000.0;
+                }
+                yield null;
+            }
+            default -> null;
+        };
+    }
+
+    private Double toKg(double quantity, String unit, Material material) {
+        return switch (unit) {
+            case "kg" -> quantity;
+            case "tonne" -> quantity * 1000.0;
+            case "m3" -> {
+                if (material != null && material.getDensity() != null && material.getDensity() > 0) {
+                    yield quantity * material.getDensity();
+                }
+                yield null;
+            }
+            default -> null;
+        };
     }
 
     private record ExploitationEmissions(
