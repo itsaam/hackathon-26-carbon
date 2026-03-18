@@ -193,9 +193,11 @@ export default function SiteDetail() {
     try {
       setScenarioLoading(true);
       setScenarioError(null);
+      const inventoryYear = result?.year ?? new Date().getFullYear();
       const body = {
         energyDeltaPercent: scenarioEnergyDelta,
         renewableDeltaPercent: scenarioRenewableDelta,
+        inventoryYear,
       };
       const data = await apiFetch<CarbonResult>(`/api/sites/${site.id}/results/estimate`, {
         method: "POST",
@@ -239,9 +241,11 @@ export default function SiteDetail() {
   const handleExportScenarioPdf = async () => {
     if (!site) return;
     try {
+      const inventoryYear = result?.year ?? new Date().getFullYear();
       const body = {
         energyDeltaPercent: scenarioEnergyDelta,
         renewableDeltaPercent: scenarioRenewableDelta,
+        inventoryYear,
         scenarioLabel,
         includeComparison: scenarioIncludeComparison,
         includeKpis: scenarioIncludeKpis,

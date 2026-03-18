@@ -163,9 +163,11 @@ public class CarbonCalculationService {
     private ExploitationEmissions calculateExploitationEmissions(Site site, int year) {
         List<EnergyFactor> factors = energyFactorRepository.findByYear(year);
         if (factors == null || factors.isEmpty()) {
-            factors = energyFactorRepository.findTopByOrderByYearDesc()
-                    .map(List::of)
-                    .orElse(List.of());
+            // Année demandée absente : reprendre l'année la plus récente dispo, avec tous les types d'énergie.
+            Integer latestYear = energyFactorRepository.findTopByOrderByYearDesc()
+                    .map(EnergyFactor::getYear)
+                    .orElse(null);
+            factors = latestYear != null ? energyFactorRepository.findByYear(latestYear) : List.of();
         }
 
         double electricityFactor = findFactorForEnergyType(factors, "electricity");
