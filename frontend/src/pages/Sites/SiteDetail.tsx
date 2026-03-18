@@ -169,6 +169,26 @@ export default function SiteDetail() {
     }
   };
 
+  const openDpe = async (dpeId: number) => {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`/api/sites/${site.id}/dpe/${dpeId}/file`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(txt || `Ouverture impossible (${res.status})`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      // Laisse le temps à l'onglet de charger avant de libérer l'URL.
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e: any) {
+      setDpeError(e?.message || "Impossible d’ouvrir le DPE.");
+    }
+  };
+
   const handleOpenScenario = () => {
     setScenarioError(null);
     setScenarioResult(null);
@@ -584,12 +604,20 @@ export default function SiteDetail() {
                   {typeof dpeList[0].surfaceM2 === "number" ? ` · ${dpeList[0].surfaceM2.toFixed(2)} m²` : ""}
                 </div>
               </div>
-              <button
-                className="inline-flex items-center gap-2 border border-border bg-muted/40 text-foreground font-medium px-3 py-2 rounded-lg hover:bg-muted transition-colors text-xs shrink-0"
-                onClick={() => downloadDpe(dpeList[0].id, dpeList[0].filename)}
-              >
-                Télécharger
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  className="inline-flex items-center gap-2 border border-border bg-muted/40 text-foreground font-medium px-3 py-2 rounded-lg hover:bg-muted transition-colors text-xs"
+                  onClick={() => openDpe(dpeList[0].id)}
+                >
+                  Ouvrir
+                </button>
+                <button
+                  className="inline-flex items-center gap-2 border border-border bg-muted/40 text-foreground font-medium px-3 py-2 rounded-lg hover:bg-muted transition-colors text-xs"
+                  onClick={() => downloadDpe(dpeList[0].id, dpeList[0].filename)}
+                >
+                  Télécharger
+                </button>
+              </div>
             </div>
 
             {dpeList[0].analysis?.resume ? (
@@ -622,12 +650,20 @@ export default function SiteDetail() {
                       {typeof dpe.surfaceM2 === "number" ? ` · ${dpe.surfaceM2.toFixed(2)} m²` : ""}
                     </div>
                   </div>
-                  <button
-                    className="inline-flex items-center gap-2 border border-border bg-muted/40 text-foreground font-medium px-3 py-2 rounded-lg hover:bg-muted transition-colors text-xs shrink-0"
-                    onClick={() => downloadDpe(dpe.id, dpe.filename)}
-                  >
-                    Télécharger
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      className="inline-flex items-center gap-2 border border-border bg-muted/40 text-foreground font-medium px-3 py-2 rounded-lg hover:bg-muted transition-colors text-xs"
+                      onClick={() => openDpe(dpe.id)}
+                    >
+                      Ouvrir
+                    </button>
+                    <button
+                      className="inline-flex items-center gap-2 border border-border bg-muted/40 text-foreground font-medium px-3 py-2 rounded-lg hover:bg-muted transition-colors text-xs"
+                      onClick={() => downloadDpe(dpe.id, dpe.filename)}
+                    >
+                      Télécharger
+                    </button>
+                  </div>
                 </div>
                 {dpe.analysis ? (
                   <details className="mt-2">
