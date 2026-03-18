@@ -65,7 +65,7 @@ export default function ScanOcrScreen() {
 
       const photo = await cameraRef.current.takePictureAsync({
         base64: true,
-        quality: 0.8,
+        quality: 1,
       });
 
       if (!photo?.uri) {

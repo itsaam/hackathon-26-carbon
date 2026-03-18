@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -98,15 +100,23 @@ public class DpeOcrService {
     }
 
     private static BufferedImage toBinarizedGrayscale(BufferedImage src) {
-        int w = src.getWidth();
-        int h = src.getHeight();
+        // Upscale si l'image est trop petite (souvent le cas avec des photos de documents à distance).
+        BufferedImage work = src;
+        if (src.getWidth() < 1400) {
+            work = scale(src, 2.0);
+        } else if (src.getWidth() < 2200) {
+            work = scale(src, 1.5);
+        }
+
+        int w = work.getWidth();
+        int h = work.getHeight();
 
         // 1) Grayscale + histogram
         int[] hist = new int[256];
         int[][] gray = new int[h][w];
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                int rgb = src.getRGB(x, y);
+                int rgb = work.getRGB(x, y);
                 int r = (rgb >> 16) & 0xFF;
                 int g = (rgb >> 8) & 0xFF;
                 int b = rgb & 0xFF;
@@ -153,6 +163,19 @@ public class DpeOcrService {
                 out.setRGB(x, y, (v < threshold) ? black : white);
             }
         }
+        return out;
+    }
+
+    private static BufferedImage scale(BufferedImage src, double factor) {
+        int w = Math.max(1, (int) Math.round(src.getWidth() * factor));
+        int h = Math.max(1, (int) Math.round(src.getHeight() * factor));
+        BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2 = out.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.drawImage(src, 0, 0, w, h, null);
+        g2.dispose();
         return out;
     }
 
