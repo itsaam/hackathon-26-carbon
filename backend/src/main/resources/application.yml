@@ -24,6 +24,11 @@ app:
   jwt:
     secret: ${APP_JWT_SECRET}
     expiration: 86400000
+  ocr:
+    # Linux (serveur). Vérifie avec: `which tesseract` → souvent /usr/bin/tesseract
+    tesseractPath: ${APP_OCR_TESSERACTPATH:/usr/bin/tesseract}
+    # Langue OCR (pack tesseract-ocr-fra)
+    lang: ${APP_OCR_LANG:fra}
   geocoding:
     nominatim-base-url: https://nominatim.openstreetmap.org
     user-agent: carbon-hackathon-26-demo (local)
