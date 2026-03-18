@@ -64,8 +64,8 @@ export default function ScanOcrScreen() {
       setOcrResult(null);
 
       const photo = await cameraRef.current.takePictureAsync({
+        base64: true,
         quality: 0.8,
-        skipProcessing: true,
       });
 
       if (!photo?.uri) {
@@ -75,10 +75,15 @@ export default function ScanOcrScreen() {
       setImageUri(photo.uri);
 
       setProcessing(true);
-      // Lecture en base64 pour envoi au backend OCR.
-      const base64 = await FileSystem.readAsStringAsync(photo.uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      // Base64 pour envoi au backend OCR (si non fourni par la caméra, fallback FileSystem).
+      const base64 =
+        photo.base64 ||
+        (await FileSystem.readAsStringAsync(photo.uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        }));
+      if (!base64) {
+        throw new Error("Impossible de lire l'image (base64).");
+      }
 
       const result = await apiJson<DpeOcrResponse>("/api/ocr/dpe", {
         method: "POST",
