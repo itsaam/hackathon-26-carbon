@@ -169,6 +169,8 @@ public class CarbonResultController {
         if (body != null) {
             Double energyDeltaPct = body.getOrDefault("energyDeltaPercent", 0.0);
             Double renewableDeltaPct = body.getOrDefault("renewableDeltaPercent", 0.0);
+            Double inventoryYearRaw = body.get("inventoryYear");
+            Integer inventoryYear = inventoryYearRaw != null ? (int) Math.round(inventoryYearRaw) : null;
 
             double factorEnergy = 1.0 + energyDeltaPct / 100.0;
             double factorRenewable = 1.0 + renewableDeltaPct / 100.0;
@@ -203,6 +205,9 @@ public class CarbonResultController {
                             ? scenarioSite.getRenewableProductionKwh() * factorRenewable
                             : null
             );
+
+            var estimate = carbonCalculationService.estimateForSite(scenarioSite, inventoryYear);
+            return ResponseEntity.ok(toDTO(estimate));
         }
 
         var estimate = carbonCalculationService.estimateForSite(scenarioSite, null);
