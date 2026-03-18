@@ -5,7 +5,7 @@ import KpiCard from "@/components/ui/KpiCard";
 import { ArrowLeft, RefreshCw, Building2, Users, Zap, Car, Cpu, MapPin, Info, SlidersHorizontal, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, getAuthToken } from "@/lib/api";
 import { useEffect, useMemo, useState } from "react";
 
 export default function SiteDetail() {
@@ -142,6 +142,30 @@ export default function SiteDetail() {
       setDpeError(e?.message || "Impossible d’importer le DPE.");
     } finally {
       setDpeLoading(false);
+    }
+  };
+
+  const downloadDpe = async (dpeId: number, filename?: string) => {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`/api/sites/${site.id}/dpe/${dpeId}/file`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(txt || `Téléchargement impossible (${res.status})`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename || `dpe-${dpeId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      setDpeError(e?.message || "Impossible de télécharger le DPE.");
     }
   };
 
@@ -560,14 +584,12 @@ export default function SiteDetail() {
                   {typeof dpeList[0].surfaceM2 === "number" ? ` · ${dpeList[0].surfaceM2.toFixed(2)} m²` : ""}
                 </div>
               </div>
-              <a
+              <button
                 className="inline-flex items-center gap-2 border border-border bg-muted/40 text-foreground font-medium px-3 py-2 rounded-lg hover:bg-muted transition-colors text-xs shrink-0"
-                href={`/api/sites/${site.id}/dpe/${dpeList[0].id}/file`}
-                target="_blank"
-                rel="noreferrer"
+                onClick={() => downloadDpe(dpeList[0].id, dpeList[0].filename)}
               >
                 Télécharger
-              </a>
+              </button>
             </div>
 
             {dpeList[0].analysis?.resume ? (
@@ -600,14 +622,12 @@ export default function SiteDetail() {
                       {typeof dpe.surfaceM2 === "number" ? ` · ${dpe.surfaceM2.toFixed(2)} m²` : ""}
                     </div>
                   </div>
-                  <a
+                  <button
                     className="inline-flex items-center gap-2 border border-border bg-muted/40 text-foreground font-medium px-3 py-2 rounded-lg hover:bg-muted transition-colors text-xs shrink-0"
-                    href={`/api/sites/${site.id}/dpe/${dpe.id}/file`}
-                    target="_blank"
-                    rel="noreferrer"
+                    onClick={() => downloadDpe(dpe.id, dpe.filename)}
                   >
                     Télécharger
-                  </a>
+                  </button>
                 </div>
                 {dpe.analysis ? (
                   <details className="mt-2">
