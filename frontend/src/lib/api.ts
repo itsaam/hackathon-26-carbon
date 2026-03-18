@@ -58,3 +58,27 @@ export async function apiFetch<T>(
   return (payload as unknown as T) ?? (undefined as unknown as T);
 }
 
+export async function apiFetchBlob(
+  path: string,
+  init: RequestInit & { auth?: boolean } = {}
+): Promise<{ blob: Blob; contentType: string }> {
+  const { auth = true, headers, ...rest } = init;
+  const token = auth ? getAuthToken() : null;
+
+  const res = await fetch(`${getBaseUrl()}${path}`, {
+    ...rest,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(headers || {}),
+    },
+  });
+
+  const contentType = res.headers.get("content-type") || "";
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new ApiError(res.status, txt || `Erreur API (${res.status})`);
+  }
+
+  return { blob: await res.blob(), contentType };
+}
+

@@ -5,7 +5,7 @@ import KpiCard from "@/components/ui/KpiCard";
 import { ArrowLeft, RefreshCw, Building2, Users, Zap, Car, Cpu, MapPin, Info, SlidersHorizontal, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { apiFetch, getAuthToken } from "@/lib/api";
+import { apiFetch, apiFetchBlob } from "@/lib/api";
 import { useEffect, useMemo, useState } from "react";
 
 export default function SiteDetail() {
@@ -147,15 +147,12 @@ export default function SiteDetail() {
 
   const downloadDpe = async (dpeId: number, filename?: string) => {
     try {
-      const token = getAuthToken();
-      const res = await fetch(`/api/sites/${site.id}/dpe/${dpeId}/file`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(txt || `Téléchargement impossible (${res.status})`);
+      const { blob, contentType } = await apiFetchBlob(`/api/sites/${site.id}/dpe/${dpeId}/file`);
+      if (!contentType.toLowerCase().includes("application/pdf")) {
+        // On évite d'ouvrir/télécharger un HTML d'erreur (ex: index.html) en guise de PDF
+        const txt = await blob.text().catch(() => "");
+        throw new Error(txt || `Réponse inattendue (${contentType || "unknown"})`);
       }
-      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -171,15 +168,11 @@ export default function SiteDetail() {
 
   const openDpe = async (dpeId: number) => {
     try {
-      const token = getAuthToken();
-      const res = await fetch(`/api/sites/${site.id}/dpe/${dpeId}/file`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(txt || `Ouverture impossible (${res.status})`);
+      const { blob, contentType } = await apiFetchBlob(`/api/sites/${site.id}/dpe/${dpeId}/file`);
+      if (!contentType.toLowerCase().includes("application/pdf")) {
+        const txt = await blob.text().catch(() => "");
+        throw new Error(txt || `Réponse inattendue (${contentType || "unknown"})`);
       }
-      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       window.open(url, "_blank", "noopener,noreferrer");
       // Laisse le temps à l'onglet de charger avant de libérer l'URL.
