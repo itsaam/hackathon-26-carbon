@@ -29,6 +29,11 @@ app:
     tesseractPath: ${APP_OCR_TESSERACTPATH:/usr/bin/tesseract}
     # Langue OCR (pack tesseract-ocr-fra)
     lang: ${APP_OCR_LANG:fra}
+  ollama:
+    # Ollama tourne sur le serveur (souvent dans le même host) : `ollama serve` → 11434
+    baseUrl: ${APP_OLLAMA_BASEURL:http://127.0.0.1:11434}
+    # Modèle conseillé: llama3.1:8b (déjà présent chez toi)
+    model: ${APP_OLLAMA_MODEL:llama3.1:8b}
   geocoding:
     nominatim-base-url: https://nominatim.openstreetmap.org
     user-agent: carbon-hackathon-26-demo (local)
