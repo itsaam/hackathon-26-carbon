@@ -41,7 +41,7 @@ public class DpeLlmAnalysisService {
     private static String buildPrompt(String text) {
         // Important: demander uniquement du JSON pour parsing fiable.
         return """
-Tu es un extracteur de données pour un DPE (Diagnostic de Performance Énergétique) français.
+Tu es un extracteur de données et générateur de conseils pour un DPE (Diagnostic de Performance Énergétique) français.
 
 À partir du TEXTE ci-dessous, extrais les champs et réponds UNIQUEMENT avec un JSON valide (sans markdown, sans texte autour).
 
@@ -56,13 +56,18 @@ Champs attendus (laisser null si introuvable):
   "coutAnnuelMinEur": number|null,
   "coutAnnuelMaxEur": number|null,
   "emissionsKgCo2ParAn": number|null,
-  "numeroAdeme": string|null
+  "numeroAdeme": string|null,
+  "resume": string,
+  "conseils": string[]
 }
 
 Règles:
 - Les nombres doivent être des nombres JSON (pas de texte, pas d'unité).
 - Les dates au format JJ/MM/AAAA si possible.
 - Pour l'adresse, concatène les lignes.
+- Le champ "resume" doit être court (1 à 3 phrases) et utile pour un écran \"détail site\".
+- Le champ "conseils" doit contenir 3 à 7 conseils actionnables, basés sur ce qui est présent dans le DPE.
+- Si tu manques d'infos, propose des conseils génériques adaptés (isolation, chauffage, ECS, ventilation, réglages, etc.).
 
 TEXTE:
 \"\"\"%s\"\"\"

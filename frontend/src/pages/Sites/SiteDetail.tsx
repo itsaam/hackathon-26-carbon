@@ -5,7 +5,7 @@ import KpiCard from "@/components/ui/KpiCard";
 import { ArrowLeft, RefreshCw, Building2, Users, Zap, Car, Cpu, MapPin, Info, SlidersHorizontal, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { apiFetch, getAuthToken } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { useEffect, useMemo, useState } from "react";
 
 export default function SiteDetail() {
@@ -25,6 +25,9 @@ export default function SiteDetail() {
   const [weatherError, setWeatherError] = useState<string | null>(null);
   const [teleworkLoading, setTeleworkLoading] = useState(false);
   const [teleworkError, setTeleworkError] = useState<string | null>(null);
+  const [dpeLoading, setDpeLoading] = useState(false);
+  const [dpeError, setDpeError] = useState<string | null>(null);
+  const [dpeList, setDpeList] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [forecast, setForecast] = useState<WeatherForecast | null>(null);
   const [telework, setTelework] = useState<TeleworkRecommendation | null>(null);
@@ -34,6 +37,25 @@ export default function SiteDetail() {
   if (!site) return <div className="text-center py-20 text-muted-foreground">Site non trouvé.</div>;
 
   const canLoadWeather = typeof site.latitude === "number" && typeof site.longitude === "number";
+
+  const loadDpe = async () => {
+    if (!site?.id) return;
+    try {
+      setDpeLoading(true);
+      setDpeError(null);
+      const list = await apiFetch<any[]>(`/api/sites/${site.id}/dpe`);
+      setDpeList(Array.isArray(list) ? list : []);
+    } catch (e: any) {
+      setDpeError(e?.message || "Impossible de charger les DPE.");
+    } finally {
+      setDpeLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDpe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [site?.id]);
 
   useEffect(() => {
     if (!canLoadWeather) return;
@@ -104,6 +126,22 @@ export default function SiteDetail() {
       await refetch();
     } finally {
       setRecalculLoading(false);
+    }
+  };
+
+  const handleUploadDpe = async (file: File) => {
+    if (!site?.id) return;
+    try {
+      setDpeLoading(true);
+      setDpeError(null);
+      const fd = new FormData();
+      fd.append("file", file);
+      await apiFetch(`/api/sites/${site.id}/dpe`, { method: "POST", body: fd });
+      await loadDpe();
+    } catch (e: any) {
+      setDpeError(e?.message || "Impossible d’importer le DPE.");
+    } finally {
+      setDpeLoading(false);
     }
   };
 
@@ -477,6 +515,115 @@ export default function SiteDetail() {
           )}
         </motion.div>
       </div>
+
+      {/* DPE (uniquement sur la vue détail du site) */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="bg-card border border-border rounded-xl p-6 space-y-5 mt-6">
+        <h2 className="text-base font-semibold text-card-foreground flex items-center gap-2">
+          <FileText className="w-4 h-4 text-muted-foreground" /> DPE (import PDF)
+        </h2>
+
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+          <label className="inline-flex items-center justify-center gap-2 border border-border bg-muted/40 text-foreground font-medium px-3 sm:px-4 py-2 rounded-lg hover:bg-muted transition-colors text-sm cursor-pointer w-fit">
+            Importer un PDF
+            <input
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleUploadDpe(f);
+                e.currentTarget.value = "";
+              }}
+            />
+          </label>
+          <button
+            onClick={loadDpe}
+            className="inline-flex items-center justify-center gap-2 border border-border bg-muted/40 text-foreground font-medium px-3 sm:px-4 py-2 rounded-lg hover:bg-muted transition-colors text-sm w-fit"
+            disabled={dpeLoading}
+          >
+            Rafraîchir
+          </button>
+          {dpeLoading ? <span className="text-xs text-muted-foreground">Chargement…</span> : null}
+        </div>
+
+        {dpeError ? <div className="text-sm text-destructive">{dpeError}</div> : null}
+
+        {dpeList.length ? (
+          <div className="border border-border rounded-xl p-4 bg-muted/10">
+            <p className="text-xs text-muted-foreground mb-2">Dernier DPE importé</p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-card-foreground truncate">{dpeList[0].filename || `DPE #${dpeList[0].id}`}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {dpeList[0].uploadedAt ? new Date(dpeList[0].uploadedAt).toLocaleString("fr-FR") : ""}
+                  {dpeList[0].address ? ` · ${dpeList[0].address}` : ""}
+                  {typeof dpeList[0].surfaceM2 === "number" ? ` · ${dpeList[0].surfaceM2.toFixed(2)} m²` : ""}
+                </div>
+              </div>
+              <a
+                className="inline-flex items-center gap-2 border border-border bg-muted/40 text-foreground font-medium px-3 py-2 rounded-lg hover:bg-muted transition-colors text-xs shrink-0"
+                href={`/api/sites/${site.id}/dpe/${dpeList[0].id}/file`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Télécharger
+              </a>
+            </div>
+
+            {dpeList[0].analysis?.resume ? (
+              <p className="text-sm text-card-foreground mt-3">{String(dpeList[0].analysis.resume)}</p>
+            ) : null}
+
+            {Array.isArray(dpeList[0].analysis?.conseils) && dpeList[0].analysis.conseils.length ? (
+              <div className="mt-3">
+                <p className="text-xs font-semibold text-card-foreground mb-1">Conseils</p>
+                <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
+                  {dpeList[0].analysis.conseils.slice(0, 7).map((c: any, idx: number) => (
+                    <li key={idx}>{String(c)}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="space-y-3">
+          {dpeList.length ? (
+            dpeList.map((dpe) => (
+              <div key={dpe.id} className="border border-border rounded-lg p-3 bg-muted/20">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-card-foreground truncate">{dpe.filename || `DPE #${dpe.id}`}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {dpe.uploadedAt ? new Date(dpe.uploadedAt).toLocaleString("fr-FR") : ""}
+                      {dpe.address ? ` · ${dpe.address}` : ""}
+                      {typeof dpe.surfaceM2 === "number" ? ` · ${dpe.surfaceM2.toFixed(2)} m²` : ""}
+                    </div>
+                  </div>
+                  <a
+                    className="inline-flex items-center gap-2 border border-border bg-muted/40 text-foreground font-medium px-3 py-2 rounded-lg hover:bg-muted transition-colors text-xs shrink-0"
+                    href={`/api/sites/${site.id}/dpe/${dpe.id}/file`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Télécharger
+                  </a>
+                </div>
+                {dpe.analysis ? (
+                  <details className="mt-2">
+                    <summary className="text-xs text-muted-foreground cursor-pointer">Voir l’analyse</summary>
+                    <pre className="mt-2 text-xs whitespace-pre-wrap break-words bg-background/40 border border-border rounded-lg p-2">
+                      {JSON.stringify(dpe.analysis, null, 2)}
+                    </pre>
+                  </details>
+                ) : null}
+              </div>
+            ))
+          ) : (
+            <div className="text-sm text-muted-foreground">Aucun DPE importé pour ce site.</div>
+          )}
+        </div>
+      </motion.div>
 
       {/* Modal scénario what-if */}
       {scenarioOpen && (
