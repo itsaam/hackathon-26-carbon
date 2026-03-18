@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { View, ScrollView } from "react-native";
-import * as FileSystem from "expo-file-system";
+import * as FileSystemLegacy from "expo-file-system/legacy";
+import { File } from "expo-file-system";
 import * as DocumentPicker from "expo-document-picker";
 
 import { Screen } from "../ui/components/Screen";
@@ -43,9 +44,26 @@ export default function ScanOcrScreen() {
       const asset = res.assets?.[0];
       if (!asset?.uri) throw new Error("Fichier PDF introuvable.");
 
-      const pdfBase64 = await FileSystem.readAsStringAsync(asset.uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      // SDK 54: nouvelle API `File` (non deprecated). `base64()` lit aussi les content://.
+      // Fallback sur legacy + copie au cache si besoin.
+      let pdfBase64: string | null = null;
+      try {
+        const f = new File(asset as any);
+        pdfBase64 = await f.base64();
+      } catch {
+        // Dernier recours: copier vers le cache (Android content://) et lire via legacy
+        let readableUri = asset.uri;
+        if (readableUri.startsWith("content://")) {
+          const name = asset.name || `dpe-${Date.now()}.pdf`;
+          const dest = `${FileSystemLegacy.cacheDirectory}${name}`;
+          await FileSystemLegacy.copyAsync({ from: readableUri, to: dest });
+          readableUri = dest;
+        }
+        pdfBase64 = await FileSystemLegacy.readAsStringAsync(readableUri, { encoding: "base64" as any });
+      }
+      if (!pdfBase64) {
+        throw new Error("Impossible de lire le PDF (base64 vide).");
+      }
       const out = await apiJson<DpeAnalyzeResponse>("/api/dpe/analyze", {
         method: "POST",
         body: JSON.stringify({ pdfBase64 }),
