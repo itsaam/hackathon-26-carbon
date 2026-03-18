@@ -8,8 +8,6 @@ services:
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       APP_JWT_SECRET: ${APP_JWT_SECRET}
-      APP_OCR_TESSERACTPATH: ${APP_OCR_TESSERACTPATH:-/usr/bin/tesseract}
-      APP_OCR_LANG: ${APP_OCR_LANG:-fra}
       # Ollama tourne sur l'hôte (pas dans le container backend). En prod Linux, utiliser l'IP de l'hôte.
       APP_OLLAMA_BASEURL: ${APP_OLLAMA_BASEURL:-http://172.17.0.1:11434}
       APP_OLLAMA_MODEL: ${APP_OLLAMA_MODEL:-llama3.1:8b}

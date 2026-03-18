@@ -24,11 +24,6 @@ app:
   jwt:
     secret: ${APP_JWT_SECRET}
     expiration: 86400000
-  ocr:
-    # Linux (serveur). Vérifie avec: `which tesseract` → souvent /usr/bin/tesseract
-    tesseractPath: ${APP_OCR_TESSERACTPATH:/usr/bin/tesseract}
-    # Langue OCR (pack tesseract-ocr-fra)
-    lang: ${APP_OCR_LANG:fra}
   ollama:
     # Ollama tourne sur le serveur (souvent dans le même host) : `ollama serve` → 11434
     baseUrl: ${APP_OLLAMA_BASEURL:http://127.0.0.1:11434}
