@@ -5,9 +5,11 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.imageio.ImageIO;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.awt.image.BufferedImage;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Base64;
@@ -48,19 +50,31 @@ public class DpeOcrService {
         byte[] bytes = Base64.getDecoder().decode(cleanBase64(imageBase64));
         File tmpDir = new File(System.getProperty("java.io.tmpdir"));
         String id = UUID.randomUUID().toString();
-        File input = new File(tmpDir, "dpe-" + id + ".img");
+        File input = new File(tmpDir, "dpe-" + id + ".png");
         File outBase = new File(tmpDir, "dpe-" + id);
 
         try {
-            Files.write(input.toPath(), bytes);
+            // Pré-traitement: décodage → grayscale + binarisation simple → PNG.
+            // Améliore fortement Tesseract sur des photos (reflets, contraste faible).
+            BufferedImage src = ImageIO.read(new ByteArrayInputStream(bytes));
+            if (src == null) {
+                // Fallback brut si ImageIO ne sait pas décoder le format.
+                Files.write(input.toPath(), bytes);
+            } else {
+                BufferedImage pre = toBinarizedGrayscale(src);
+                ImageIO.write(pre, "png", input);
+            }
 
-            // tesseract <input> <outBase> -l fra --dpi 300
+            // tesseract <input> <outBase> -l fra --dpi 300 --oem 1 --psm 6
             ProcessBuilder pb = new ProcessBuilder(
                     exe,
                     input.getAbsolutePath(),
                     outBase.getAbsolutePath(),
                     "-l", tesseractLang,
-                    "--dpi", "300"
+                    "--dpi", "300",
+                    "--oem", "1",
+                    "--psm", "6",
+                    "-c", "preserve_interword_spaces=1"
             );
             pb.redirectErrorStream(true);
             Process p = pb.start();
@@ -81,6 +95,65 @@ public class DpeOcrService {
             try { Files.deleteIfExists(input.toPath()); } catch (Exception ignored) {}
             try { Files.deleteIfExists(new File(outBase.getAbsolutePath() + ".txt").toPath()); } catch (Exception ignored) {}
         }
+    }
+
+    private static BufferedImage toBinarizedGrayscale(BufferedImage src) {
+        int w = src.getWidth();
+        int h = src.getHeight();
+
+        // 1) Grayscale + histogram
+        int[] hist = new int[256];
+        int[][] gray = new int[h][w];
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int rgb = src.getRGB(x, y);
+                int r = (rgb >> 16) & 0xFF;
+                int g = (rgb >> 8) & 0xFF;
+                int b = rgb & 0xFF;
+                int v = (int) Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+                if (v < 0) v = 0;
+                if (v > 255) v = 255;
+                gray[y][x] = v;
+                hist[v]++;
+            }
+        }
+
+        // 2) Otsu threshold
+        int total = w * h;
+        double sum = 0;
+        for (int t = 0; t < 256; t++) sum += (double) t * hist[t];
+
+        double sumB = 0;
+        int wB = 0;
+        int wF;
+        double varMax = -1;
+        int threshold = 160; // fallback
+        for (int t = 0; t < 256; t++) {
+            wB += hist[t];
+            if (wB == 0) continue;
+            wF = total - wB;
+            if (wF == 0) break;
+            sumB += (double) t * hist[t];
+            double mB = sumB / wB;
+            double mF = (sum - sumB) / wF;
+            double varBetween = (double) wB * (double) wF * (mB - mF) * (mB - mF);
+            if (varBetween > varMax) {
+                varMax = varBetween;
+                threshold = t;
+            }
+        }
+
+        // 3) Binarize
+        BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_BINARY);
+        int black = 0xFF000000;
+        int white = 0xFFFFFFFF;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int v = gray[y][x];
+                out.setRGB(x, y, (v < threshold) ? black : white);
+            }
+        }
+        return out;
     }
 
     private static String cleanBase64(String b64) {
