@@ -161,19 +161,13 @@ public class CarbonCalculationService {
     }
 
     private ExploitationEmissions calculateExploitationEmissions(Site site, int year) {
-        List<EnergyFactor> factors = energyFactorRepository.findByYear(year);
-        if (factors == null || factors.isEmpty()) {
-            // Année demandée absente : reprendre l'année la plus récente dispo, avec tous les types d'énergie.
-            Integer latestYear = energyFactorRepository.findTopByOrderByYearDesc()
-                    .map(EnergyFactor::getYear)
-                    .orElse(null);
-            factors = latestYear != null ? energyFactorRepository.findByYear(latestYear) : List.of();
-        }
+        // On essaye l'année demandée, puis on "complète" type par type avec le facteur le plus récent disponible.
+        List<EnergyFactor> factorsForYear = energyFactorRepository.findByYear(year);
 
-        double electricityFactor = findFactorForEnergyType(factors, "electricity");
-        double gasFactor = findFactorForEnergyType(factors, "gas");
-        double fuelOilFactor = findFactorForEnergyType(factors, "fuel_oil");
-        double districtHeatingFactor = findFactorForEnergyType(factors, "district_heating");
+        double electricityFactor = resolveEnergyFactor(factorsForYear, "electricity");
+        double gasFactor = resolveEnergyFactor(factorsForYear, "gas");
+        double fuelOilFactor = resolveEnergyFactor(factorsForYear, "fuel_oil");
+        double districtHeatingFactor = resolveEnergyFactor(factorsForYear, "district_heating");
 
         double electricityKwh = defaultZero(site.getElectricityConsumptionKwh() != null
                 ? site.getElectricityConsumptionKwh()
@@ -210,6 +204,7 @@ public class CarbonCalculationService {
     }
 
     private double findFactorForEnergyType(List<EnergyFactor> factors, String energyType) {
+        if (factors == null || factors.isEmpty()) return 0.0;
         return factors.stream()
                 .filter(f -> energyType.equalsIgnoreCase(f.getEnergyType()))
                 .findFirst()
@@ -223,6 +218,16 @@ public class CarbonCalculationService {
                     }
                     return 0.0;
                 })
+                .orElse(0.0);
+    }
+
+    private double resolveEnergyFactor(List<EnergyFactor> factorsForYear, String energyType) {
+        double factor = findFactorForEnergyType(factorsForYear, energyType);
+        if (factor > 0.0) {
+            return factor;
+        }
+        return energyFactorRepository.findTopByEnergyTypeOrderByYearDesc(energyType)
+                .map(f -> f.getGwpPerKwh() != null ? f.getGwpPerKwh() : defaultZero(f.getEmissionFactor()))
                 .orElse(0.0);
     }
 

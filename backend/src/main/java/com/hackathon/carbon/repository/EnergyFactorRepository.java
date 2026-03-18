@@ -13,4 +13,5 @@ public interface EnergyFactorRepository extends JpaRepository<EnergyFactor, Long
     List<EnergyFactor> findByYear(Integer year);
     Optional<EnergyFactor> findTopByOrderByYearDesc();
     List<EnergyFactor> findByEnergyTypeAndYear(String energyType, Integer year);
+    Optional<EnergyFactor> findTopByEnergyTypeOrderByYearDesc(String energyType);
 }
